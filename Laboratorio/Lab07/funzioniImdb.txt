@@ -272,9 +272,7 @@ RETURNS text AS $$
 
 			--NAZIONE ANNO TITOLO_LOCALIZZATO
 			FOR d_country, d_date, d_title IN 
-				SELECT country.name, to_char(released.released,
-				'DD-MM-YYYY'),
-				released.title
+				SELECT country.name, cast(released.released as varchar), released.title
 				FROM released inner join country on
 				released.country=country.iso3 where released.movie=m.id
 			LOOP
@@ -285,8 +283,7 @@ RETURNS text AS $$
                                         	card:=card||' in data '||d_date;
 					END IF;
 					IF (d_title IS NOT NULL) THEN
-                                        	card:=card||' con il
-						titiolo '||d_title;
+                                        	card:=card||' come '||d_title;
 					END IF;
 					card:=card||E'\n';
 				END IF;
