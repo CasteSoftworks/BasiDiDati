@@ -1,0 +1,31 @@
+CREATE DOMAIN sesso_check AS VARCHAR(5) NOT NULL DEFAULT 'Altro' CHECK (value in('Uomo','Donna','Altro'));
+
+--devo aggiungere per quale dipartimento lavora e a quale progetto
+create table impiegato(
+	cdf varchar(11) unique not null primary key,
+	nome varchar(50) not null,
+	sesso sesso_check,
+	indirizzo varchar(50)
+);
+
+create table sede(
+	nome varchar(50) unique not null primary key,
+	indirizzo varchar(50) not null
+);
+
+--devo aggiungere che la primary key è nome,sede e il #dipendenti
+create table dipartimento(
+	nome varchar(50) unique not null primary key,
+	numero varchar(15) unique not null,
+	sedi varchar(50) references sede(nome) unique not null,
+	direttore varchar(50) references impiegato(cdf) not null
+);
+
+
+create table progetto (
+	nome varchar(50) unique not null primary key,
+	numero varchar(15) unique not null,
+	sede varchar(50) not null references sede(nome),
+	dipartimento varchar(50) not null references dipartimento(nome)
+);
+

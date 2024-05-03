@@ -1,0 +1,108 @@
+<!doctype html>
+	<html lang="en">
+	 <head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Login SuperMicroDB</title>
+		<link href="../bootstrap-4.4.1-dist/css/bootstrap.min.css" rel="stylesheet">
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+	 </head>
+	 <body>
+		<div class="container text-center">
+			<div class="row">
+				<div class="col-8">
+					<h1><b>SUPERMICRODB</b></h1>
+				</div>
+				<div class="col">
+					<h1>so much data at you fingertips</h1>
+				</div>
+			</div>
+			<div class="row" id="menu-sitoweb">
+				<div class="col-2">
+					<a class="btn btn-primary btn-lg" href="./index.html" role="button">HOME</a>
+					<p>Return to the homepage</p>
+				</div>
+				<div class="col-2">
+					<a class="btn btn-primary btn-lg" href="#" role="button">LOGIN</a>
+					<h4>You are here</h4>
+				</div>
+				<div class="col-2">
+					<a class="btn btn-primary btn-lg" href="./aboutus.html" role="button">ABOUT US</a>
+					<p>Learn about us</p>
+				</div>
+				<div class="col-2">
+					<a class="btn btn-primary btn-lg" href="#" role="button">DB 1</a>
+					<p>Only accessible to lvl1 users</p>
+				</div>
+				<div class="col-2">
+					<a class="btn btn-primary btn-lg" href="#" role="button">DB 2</a>
+					<p>Only accessible to lvl2 users</p>
+				</div>
+				<div class="col-2">
+					<a class="btn btn-primary btn-lg" href="#" role="button">DB 3</a>
+					<p>Only accessible to lvl3 users</p>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-6">
+					<h1>LOGIN</h1>
+				</div>
+				<div class="col-6">
+				<h1>REGISTER (temporarly unavailable)</h1>
+				</div>
+			</div>
+		</div>
+		<div class="container">
+			<div class="row">
+				<div class="col-6">
+					<h3>Welcome back!</h3>
+					<form id="login-into-system">
+						<div class="mb-3">
+							<label for="loginInputEmail" class="form-label">Email address</label>
+							<input type="email" class="form-control" id="loginInputEmail" aria-describedby="emailHelp">
+						</div>
+						<div class="mb-3">
+							<label for="loginInputPassword" class="form-label">Password</label>
+							<input type="password" class="form-control" id="loginInputPassword">
+						</div>
+						<select class="form-select" aria-label="Default select example">
+							<option selected>Select your login privileges</option>
+							<option value="1">Level 1</option>
+							<option value="2">Level 2</option>
+							<option value="3">Level 3</option>
+						</select>
+						<br>
+						<br>
+						<button type="submit" class="btn btn-primary">ENTER</button>
+					</form>
+				</div>
+				<div class="col-6">
+					<form>
+					  <div class="mb-3">
+							<label for="registerInputEmail" class="form-label">Email address</label>
+								<input type="email" class="form-control" id="registerInputEmail" aria-describedby="emailHelp" disabled>
+								<div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
+							</div>
+							<div class="mb-3">
+								<label for="registerInputPassword" class="form-label">Password</label>
+								<input type="password" class="form-control" id="registerInputPassword" disabled>
+							</div>
+							<div class="mb-3">
+								<label for="registerRepeatPassword" class="form-label">Repeat Password</label>
+								<input type="password" class="form-control" id="registerRepeatPassword" disabled>
+							</div>
+							<select class="form-select" aria-label="Default select example" disabled>
+								<option selected>Select your maximum privileges</option>
+								<option value="1">Level 1</option>
+								<option value="2">Level 2</option>
+								<option value="3">Level 3</option>
+							</select>
+							<br>
+							<br>
+							<button type="submit" class="btn btn-primary">REGISTER</button>
+					</form>
+				</div>
+			</div>
+		</div>
+	<body>
+</html>

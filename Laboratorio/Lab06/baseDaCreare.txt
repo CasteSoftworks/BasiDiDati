@@ -1,0 +1,157 @@
+Creare un DB per la gestione universitaria di un UNICO corso
+	* gestire docenti
+		+ al massimo 3 insegnamenti
+			
+			id_professore | nome
+			varchar	        varchar
+
+	* gestire insegnamenti
+		+ ogni insegnamento ha un codice, un valore in cfu e l'anno di
+		  erogazione
+		  	
+		id_insegnamento | id_professore | cfu | anno_erogazione | data
+
+	* gestire studenti
+	
+			id_studente | nome_stud | anno_iscrizione
+			varchar	      varchar     int(1) check >0
+
+	* gestire esami 
+		+ tabella elenco calendario
+			
+			id_insegnamento | data_ora | tipo_esame | durata
+			varchar           timestamp  domain(s,o,l) int(1)
+
+		+ tabella iscrizione
+		
+			id_insegnamento | id_studente
+			varchar		  varchar
+
+		+ tabella sostenuto
+			
+			id_insegnamento | id_studente | voto
+			varchar		  varchar       int check >=0 e <=31
+
+Dominio tipo 'scritto','orale','laboratorio'
+
+--calendario ora è univoco per insegnamento, prof e data così da avere 
+  più di un esame per ogni materia, più esami per ogni professore e 
+  più professori per un tipo d'esame 
+create table calendario_esami(
+	id_ins varchar not null references insegnamenti(id_ins),
+	id_prof varchar not null references docenti(id_prof),
+	data timestamp not null,
+	durata int check(durata between 1 and 6),
+	tipo tipo_esame not null,
+	primary key(id_ins,id_prof,data,tipo)
+);
+
+insert into docenti values 
+('1234467','Paolo Boldi'),
+('9875433','Danilo Bruschi'),
+('172560A','Beatrice Palano'),
+('1952701','Cecilia Cavaterra');
+
+insert into docenti values ('4521728','Stefano Aguzzoli');
+
+insert into insegnamenti values 
+('PROG1','Programmazione 1','1234467',12,1),
+('SIPRI','Sicurezza e Privatezza','9875433',6,2),
+('LFA','Linguaggi Formali e Automi','172560A',6,1),
+('MATCO','Matematica Del Continuo','1952701',12,1);
+
+insert into insegnamenti values
+('PROG2','Programmazione 2','1234467',6,2),
+('ALCOM','Algoritmi e Complessità','1234467',6,3);
+
+insert into insegnamenti values
+('SMFON','Fond. di Social Media Digitali','9875433',6,3),
+('PROSO','Progettazione Sistemi Operativi','9875433',6,2),
+('SO1','Sistemi Operativi 1','9875433',6,1);
+
+insert into insegnamenti values ('LOGIM','Logica Matematica','4521728',6,1);
+
+
+insert into calendario_esami values 
+('PROG1','1234467','2023-02-07 08:30:00',4,'laboratorio'),
+('PROG1','1234467','2023-02-14 10:30:00',1,'orale'),
+('LFA','172360A','2023-06-22 08:30:00',2,'scritto'),
+('MATCO','1952701','2023-01-04 10:00:00',2,'scritto'),
+('MATCO','1952701','2023-01-09 10:00:00',1,'orale'),
+('MATCO','1952701','2023-07-18 10:00:00',2,'scritto'),
+('MATCO','1952701','2023-07-25 10:00:00',1,'orale'),
+('SIPRI','9875433','2024-01-28 08:30:00',3,'laboratorio'),
+('SIPRI','9875433','2024-02-05 00:00:00',1,'orale');
+
+insert into calendario_esami values ('LOGIM','4521728','2023-06-19 08:30:00',3,'scritto');
+
+insert into esami values 
+('PROG1','11790A',26,TRUE),
+('PROG1','21349A',22,TRUE),                      
+('LFA','11790A',27,TRUE),
+('LFA','21349A',
+('MATCO','11790A',24,TRUE),
+('MATCO','21349A',20,TRUE),
+('SIPRI','11790A',26,TRUE);
+
+insert into esami values ('LOGIM','21349A',21,TRUE);
+
+insert into esami(id_ins,id_stud,iscritto) values ('LOGIM','11790A',TRUE);
+
+--funzione per vedere TUTTI gli esami svolti da uno studente
+CREATE FUNCTION
+esami_svolti(id varchar)
+RETURNS refcursor
+AS $$
+DECLARE
+	ref refcursor;	
+BEGIN
+	open ref for
+		select id_ins as "codice esame", nome_corso as "nome esame"
+		from esami inner join insegnamenti on esami.id_ins=insegnamenti.id_ins
+		where id_stud=$1;
+	return ref;
+END;
+$$ LANGUAGE plpgsql
+
+select esami_svolti( matricola tra '' );
+fetch all from "<unnamed portal 1>";
+
+--funzione che calcola la media di uno studente
+CREATE FUNCTION
+media_studente(id varchar)
+RETURNS float
+AS $$
+BEGIN
+        select avg(voto)
+        from esami
+        where id_stud=$1 and iscritto=TRUE;
+	
+END;
+$$ LANGUAGE plpgsql
+
+select media_studente( matricola tra '' )
+
+--funzione per vedere se un professore tiene al massimo 3 corsi
+CREATE FUNCTION
+quanti_corsi(id varchar)
+RETURNS varchar
+AS $$
+DECLARE
+        n_corsi integer;
+BEGIN
+        select count(*) into n_corsi
+        from insegnamenti
+        where id_prof=$1;
+
+        IF n_corsi>3 THEN
+             RETURN 'Il professore tiene troppi corsi';
+        ELSE
+             RETURN 'Tutto ok';
+        END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+select quanti_corsi(id professore tra '');
+
+--funzione epr vedere TUTTi i corsi tenuti da un professore

@@ -1,0 +1,300 @@
+--get_movie_top_rating
+--dato un titolo di un film ritornare il voto più alto
+--input: 	titolo di un film
+--output:	score del titolo
+
+CREATE OR REPLACE FUNCTION get_movie_top_rating (varchar(200)) 
+RETURNS numeric AS $$
+	DECLARE
+		top_rating rating.score%TYPE; --meglio così e poi tradurre
+					--anziché mettere numeric subito
+	BEGIN
+		select max(score) into top_rating 
+		from rating inner join movie on rating.movie=movie.id
+		
+		--where official_title=$1; --PROBLEMA minuscolo/maiuscolo/spazi
+		--ora quella giusta che mette in lowercase e senza spazi
+		--iniziali e finali
+		where trim(lower(official_title))=trim(lower($1));
+		
+		RETURN top_rating;
+	END;
+$$ LANGUAGE plpgsql;
+
+
+--get_movie_ratings
+--dato un titolo restituisce tutti i rating
+--input:	titolo film
+--output:	tutti i rating del film
+
+--mio con refcursor
+CREATE OR REPLACE FUNCTION get_movie_ratings (varchar(200))
+RETURNS refcursor AS $$
+        DECLARE
+                ref refcursor;
+        BEGIN
+                open ref for
+                        select rating.*    
+                        from rating inner join movie on rating.movie=movie.id
+			where trim(lower(official_title))=trim(lower($1))
+			order by movie.id;
+                RETURN ref;       
+        END;    
+$$ LANGUAGE plpgsql;
+
+select get_movie_ratings('Inception');
+fetch all from "<unnamed portal 1>";
+
+--come vuole il prof, con rowtype
+CREATE OR REPLACE FUNCTION get_movie_ratings (varchar(200))
+RETURNS SETOF rating AS $$
+        DECLARE
+                a_rating rating%ROWTYPE;                                                  
+        BEGIN
+		FOR a_rating IN
+                	select rating.*    
+                	from rating inner join movie on rating.movie=movie.id   
+			where trim(lower(official_title))=trim(lower($1))
+			order by movie.id
+			LOOP
+				RETURN NEXT a_rating;
+			END LOOP;
+        END;    
+$$ LANGUAGE plpgsql;
+
+select * from get_movie_ratings('Inception');
+
+IN ENTRAMBI I CASI 8top_rating e ratings) E' AMBIGUO perché il titolo NON
+è univoco
+
+--get_movie_top_rating_revised
+--input:	titolo di un film
+--output:	score più alto per ciascun film con quel titolo e l'id
+
+CREATE TYPE movie_top_rating AS (movie_id varchar(10), top_rating numeric);
+
+CREATE OR REPLACE FUNCTION get_movie_top_rating_revised(varchar(200))
+RETURNS SETOF movie_top_rating AS $$
+        DECLARE
+                top_rating movie_top_rating;
+        BEGIN
+                for top_rating in
+                        select movie.id, max(score)
+                        from movie inner join rating on movie.id=rating.movie
+                        where trim(lower(official_title))=trim(lower($1))
+                        group by movie.id
+                        
+                        LOOP
+                                RETURN NEXT top_rating;
+                        END LOOP; 
+        END;
+$$ LANGUAGE plpgsql;
+
+select * from get_movie_top_rating_revised('The Man Who Knew Too Much');
+select * from get_movie_top_rating_revised('Inception');
+
+Le funzioni possono essere usati per delle query
+Ad esempio:
+	select id,official_title,budget,length
+	from get_movie_top_rating_revised('inception') as top_movie_rating inner
+	join movie on top_movie_rating.movie_id=movie.id;
+
+--get_movie_genere
+--dato un titolo restituisce i generi
+--input:	titolo film
+--output:	generi associati
+CREATE OR REPLACE FUNCTION get_movie_genre(varchar(200))
+RETURNS SETOF genre AS $$
+        DECLARE
+                a_genre genre%ROWTYPE;
+        BEGIN
+                for a_genre in
+                        select genre.*             
+                        from movie inner join genre on movie.id=genre.movie
+                        where trim(lower(official_title))=trim(lower($1))
+                        order by movie.id
+                        LOOP
+                                return next a_genre;
+                        END LOOP;
+        END;
+$$ LANGUAGE plpgsql;
+
+select * from get_movie_genre('The Man Who Knew Too Much');
+
+--get_movie_genre_cursor
+
+CREATE OR REPLACE FUNCTION get_movie_genre_cursor(varchar(200))
+RETURNS SETOF genre AS $$
+ DECLARE
+        a_genre genre%ROWTYPE;
+        movie_genres CURSOR FOR 
+		SELECT genre.* FROM genre INNER JOIN movie 
+		ON genre.movie = movie.id 
+		WHERE trim(lower(official_title)) = trim(lower($1)) 
+		ORDER BY genre.movie, genre.genre;
+	BEGIN
+    		OPEN movie_genres;
+    		LOOP
+    			FETCH movie_genres INTO a_genre;
+    			EXIT WHEN NOT FOUND;
+    			RETURN NEXT a_genre;  
+        	END LOOP;
+        	CLOSE movie_genres;
+        	RETURN;
+    	END;
+
+$$ LANGUAGE plpgsql;
+
+select * from get_movie_genre_cursor('the man who knew too much');
+
+
+--get_movie_cast
+--input:	titolo film
+--output:	insieme del cast del film (solo attori)
+--usare una vista per movie_cast
+
+CREATE VIEW movie_cast AS(
+	select movie, person.*
+	from crew inner join person on crew.person=person.id
+);
+
+CREATE OR REPLACE FUNCTION get_movie_cast(movie_title varchar(200))
+RETURNS SETOF movie_cast AS $$
+	DECLARE
+		mc movie_cast%ROWTYPE;
+	BEGIN
+		for mc in
+			select movie.id, person.*
+			from movie inner join crew
+			on movie.id=crew.movie inner join person on
+			crew.person=person.id
+			where trim(lower(official_title))=trim(lower($1)) and
+			p_role='actor'
+			order by movie.id, person.given_name
+
+			loop
+				return next mc;
+			end loop;
+			return;
+	END;
+$$ LANGUAGE plpgsql;
+
+select * from get_movie_cast('inception');
+
+--get_movie_cast_vista
+--usare la vista
+CREATE OR REPLACE FUNCTION get_movie_cast_vista(movie_title varchar(200))
+RETURNS SETOF person AS $$
+        DECLARE
+                mc person%ROWTYPE;
+        BEGIN
+                for mc in
+                select person.*                   
+                from movie_cast inner join crew on
+                movie_cast.id=crew.person inner join movie on 
+                movie.id=movie_cast.movie inner join person on 
+		crew.person=person.id
+                where trim(lower(official_title))=trim(lower($1)) and
+                p_role='actor'
+		group by person.id
+ 
+                        loop
+                                return next mc;
+                        end loop;
+                        return;
+        END;
+$$ LANGUAGE plpgsql;
+
+select * from get_movie_cast('Inception');
+	80 righe
+
+--analizzare get_movie_cast vs get_movie_cast_vista
+	PER INCEPTION
+	get_movie_cast_vista restituisce 80 attori, get_movie_cast ne
+	restituisce 78
+		sono Thomas Tull e Emma Thomas --> produttori (non capisco
+		perché)
+
+	HO USATO
+	CREATE TEMP TABLE actors_with_view AS
+		SELECT * FROM get_movie_cast_vista('Inception');
+
+	CREATE TEMP TABLE actors_without_view AS
+		SELECT * FROM get_movie_cast('Inception');
+
+	select given_name from actors_with_view 
+	except
+	select given_name from actors_without_view;
+
+
+--get_movie_cast_short
+--restituire nome, data nascita e morte
+
+create type short_person as (given_name varchar(100), birth_date date,
+death_date date);
+
+CREATE OR REPLACE FUNCTION get_movie_cast_short(varchar(200))
+RETURNS SETOF short_person AS $$
+	BEGIN
+		RETURN QUERY SELECT given_name, birth_date, death_date FROM
+		get_movie_cast($1);
+	END;
+$$ LANGUAGE plpgsql;
+
+
+--get_movie_card
+--restituire una scheda con titolo,anno e duarata + lista dei paesi di 
+  distribuzione con anno e titolo adatto
+--input: 	codice film
+--output: 	testo della scheda
+
+CREATE OR REPLACE FUNCTION get_movie_card(varchar(10))
+RETURNS text AS $$
+	DECLARE
+		m movie%ROWTYPE;
+		d_country country.name%TYPE;
+		d_date released.released%TYPE;
+		d_title released.title%TYPE;
+		card text;
+	BEGIN
+		card:='';
+		--MOVIE REALSED COUNTRY
+		select * into m
+		from movie
+		where trim(lower(id))=trim(lower($1));
+
+		IF FOUND THEN
+			card:=m.official_title||' - '||m.year||' -
+			'||'(durata'||m.length||' minuti)'|| E'\n';
+			--si veda extract(year from released.released) per non
+			mostrare tutto ma solo l'anno
+			--solo anno O formato europeo
+
+			--NAZIONE ANNO TITOLO_LOCALIZZATO
+			FOR d_country, d_date, d_title IN 
+				SELECT country.name, to_char(released.released,
+				'DD-MM-YYYY'),
+				released.title
+				FROM released inner join country on
+				released.country=country.iso3 where released.movie=m.id
+			LOOP
+				--attenzione a null --> annulla l'intera stringa
+				IF (d_country IS NOT NULL) THEN
+					card:=card||E'\t'||'distribuito in '||d_country;
+					IF (d_date IS NOT NULL) THEN
+                                        	card:=card||' in data '||d_date;
+					END IF;
+					IF (d_title IS NOT NULL) THEN
+                                        	card:=card||' con il
+						titiolo '||d_title;
+					END IF;
+					card:=card||E'\n';
+				END IF;
+			END LOOP;
+		ELSE
+			card:='Il film NON esiste';
+		END IF;
+		RETURN card;
+	END;
+$$ LANGUAGE plpgsql;
+select * from get_movie_card('0056869');

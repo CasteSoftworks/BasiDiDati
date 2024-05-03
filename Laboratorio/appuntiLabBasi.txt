@@ -1,0 +1,453 @@
+TITOLO BASI DI WEB
+
+Tutto il web funzione con una architettura client-server
+	*server ospita informazioni organizzandole in siti web rendendole
+	disponibili ai client
+	* i client sottoponono di norma richieste di informazioni http/https
+		+ le informazioni ossono essere di molteplici tipi
+
+				*WORLD WIDE WEB*
+
+Definito al CERN negli anni 90, ma è precedente
+Da' accesso multimediale alle informazioni --> non solo testo ma anche
+immagini/video/suono...
+Ogni nodo della infrasruttura è un sito/pagina/servizio web ed essi sono
+connessi in una sete in un server.
+Ogni server è a sua volta una nodo di una rete più grande
+
+Inizialmente per lo scamio di dati ci si appoggiava principalmente all'FTP, 
+ora è praticamnte morto
+
+La crescita di hostname e siti ha seguito un trend di crescita LOGARITMICO
+
+I servizi web stanno pian piano sostituendo il programma in locale con una
+versione online (aggiornamento unico ma per tutti)
+
+Il WWW aiuta l'umanità ad avere accesso alle informazioni
+Attualmente ci sono più di 4 MILIARDI di utenti
+
+Il WWW è solo una tipologia di applicazione web, ma è la più usata
+Fornisce accesso a documenti IPERTESTUALI attraverso internet
+	+ anche media non solo file
+
+			*WEB SERVER E WEB BROWSER*
+
+Server:	
+	* contiene le informazioni
+	* le mette a disposizione
+	* programma in ascolto su una porta TCP
+		+ quando riceve una richiesta
+			# la analizza
+			# prepara la risposta
+			# invia la risposta
+				§ può essere affermativa
+				§ può essere una richiesta di reinvio
+Client:
+	* fa richieste al server e riceve risposta
+		+ interpreta le informazioni che il server gli fornisce
+		+ reinvia la precedente richiesta se gli viene domandato
+	* non gli importa se lui non riceve tutte le risposte
+
+
+			*DA DOVE IL SERVER PRNDE LE INFORMAZIONI?*
+
+Dal DB!
+Il terzo attore nella architettura è il DBM
+
+					*URL*
+
+Unifrom Resource Locator
+E' l'inidirizzo UNIVOCO di OGNI Server
+
+schema://hostname[:port]/path[? query]
+
+					*URI*
+
+Unifrom Resource Identifier
+Tipo l'URL ma è più generale --> URL è una sua parte
+Ha un set di caratteri ristretto
+Sintassi universale
+Non definisce la semantica della risorsa
+
+schema://user_info@host.com:port/path/to/data?query#fragment
+	'----------------------'	    |
+	|	   |			    |
+	|	   '-> authority	    |
+	'-----------------------------------'
+		   |
+		   '-> hierarchical part
+
+user_info --> username:password DEPRECATO
+query     --> key=vale
+fragment  --> fragid...
+
+
+				*IL WEB SERVER*
+
+Espone parzialmente il suo FS all'Internet
+
+
+				*CONNESSIONI HTTP*
+
+Ad una richiesta è possibile passare parametri
+	* GET:
+		passa i parametri in chiaro
+	* POST:
+		passa i parametri non in chiaro per VALORE (eventualmente
+		criptati)
+
+Tipi di connessioni:
+	NON PERSISTENTI
+		apre e chiude la connessione client-server per ogni risorsa
+	PERSISTENTI
+		chiude la connessione quando tutte le risorse sono state
+		esaudite
+
+				*RICHIESTE HTTP*
+
+La prima riga contiene 
+	* campo metodo (GET/POST/HEAD)
+	* campo url
+	* campo verisone
+
+le righe successive contengono:
+	* host
+	* tipo di connessione TCP
+	* ...
+
+				*RISPOSTE HTTP*
+
+La prima riga contiene:
+	* verisone
+	* protocollo
+	....
+Le righe successive conetngono
+	....
+
+				*STATELESSNESS*
+
+HTTP è senza stato --> non si conserva NESSUNA informazione sullo stato di
+esecuzione --> NON vuole dire che non ci sia persistenza di informazioni fra
+pagine della applicazione
+
+Per la persistenza dei dati sono stati crwati due metodi:
+	* cookie: il client ricorda attraverso piccoli documenti di testo
+	* sessione: il serve si segna le informazoni
+
+				   *COOKIE*
+
+Previsti da http
+tenuti dal client
+il browser manda i cookie necessari al server (non solo i necessari)
+
+Composti da:
+	stringhe si testo
+	date di scadenza
+	pattern per riconoscere il dominio di origine
+
+Sono temporanei o persistenti
+	* temporanei scadono alla chiusura del browser
+	* persistenti scadono alla scadenza del cookie stesso
+
+				*WEB STATICO e DINAMICO*
+
+Statico:
+	Iformazuoni FISSE su solo file ipertestuali
+Dinamico:
+	Si aggiunge una parte che fa variare la pagina in base alle azioni degli
+	utenti
+	Permette anche di accedere alle informazioni lato server, come i DB
+
+TITOLO HTML
+
+Linguaggio di markup modellato per rendere esplicita una particolare
+interprestazione del testo in maniera indipendente dalla applicazione
+Delegano l'interpretazione al browser
+
+Un file html può essere aperto con un un editor o un browser
+	* con un editor si vede il dna
+	* con un browser si vede la creatura
+
+Case Unsensitive <font> e <FONT> sono uguali
+Space Unsensitive <h1> HELLO		sarà sempre HELLO WORLD
+			WORLD </b1>
+		per andare a capo si usa il tag apposito <br>
+
+				*I TAG*
+
+Funzioni di modifica contenuto
+
+<tag> tag aperto
+</tag> tag chiuso
+
+quando un tag è aperto va poi richiuso tranne in rari casi
+alla apertura possono essere definiti degli attributi
+
+<tag attributo>
+
+<h1> Ciao </h1> 
+<font color="blue"> testo </font> specifico che il font deve avere il colore blu
+
+esistono tag senza chiusura
+<img src="cacca.jpg">
+
+possono essere annidiati
+	<tag1>
+		...
+		<tag2>
+			...
+		</tag2>
+	</tag1>
+
+				*COSA NON DEVE AVERE UN HTML*
+
+Non deve avere la parte di definizione visiva e dinamica
+Quella parte è per i file di definizione dinamica
+
+				*INTESTAZIONE HTML*
+
+La prima riga è la fìdefinizione della pagina
+
+	<!DOCTYPE HTML>
+	minimo
+
+	<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//IT">
+	con definizione delle specifiche W3C adottate
+
+serve a dire le specifiche, il linguaggio di rendering
+
+				*IL RESTO DEL DOCUMENTO*
+
+<html>
+	...
+	...
+	...
+</html>
+
+nei puntini ci sono
+	TESTA
+		informazioni aggiuntive di gestione
+			titolo,meta tag, script, stili, ...
+
+		<head>
+			...
+		</head>
+	CORPO
+		il testo, le immagini e i media
+		<body>
+			...
+		</body>
+		
+		Diviso in blocchi e linee
+			Blocchi 
+				<div>
+					... (può avere blocchi o linee)
+				</div>
+				<p> ... </p>
+
+				possono avere un id
+				uno sotto l'altro
+			Linee
+				<span>
+					... (solo altre linee)
+				</span>
+				
+				uno di fianco all'altro se lo spazio lo consente
+				*METADATI*
+
+<META> (è convenzione scriverlo in maiuscolo)
+da mettere in head
+contiene tre attributi principali
+	name, content e http-equiv
+
+				*TABELLE*
+
+<table>
+	<th> header di tabella </th> //a logica prima di ogni row, ma può essere
+	<tr> //table row	       messo ovunque
+		<td> //definizione di cella
+		</td>
+		<td>
+		</td>
+		...
+	</tr>
+	<tr>
+		...		NON CONTROLLA SE HO LO STESSO NUMERO DI CELLE
+	</tr>			CHE HO NELLA RIGA PRECEDENTE
+	<caption> ... </caption> //commentino tabella
+</table>
+
+				*FORM*
+
+Raccogliere dati 8input, textbox, ...) attraverso oggetti
+
+<input type="text"> //scirvo e basta
+<input type="password"> //censura il testo
+<input type="mail"> 
+
+
+<form>
+	...
+</form>
+
+TITOLO CSS
+
+regola css
+	selettore{dichiarazioni}
+	h1{color: white; background: red}
+	p{font:12px Verdana Arial}
+	
+	body{color backround: red} SBAGLIATO color si aspetta ": ..." e 
+				   background si aspetta "-...: ...."
+
+	div{margin-top: 12px		|
+	    margin-right: 15px		|
+	    margin-bottom: 10px		|STESSA COSA
+	    margin-left: 3px		|
+	    }				|
+	div{margin: 12px 15px 10px 3px} |
+
+	div{margin: 10px 20px} 10 sopra/sotto 20 lati
+	div{margin: 10px} 10 ovunque
+
+	#regole=#selettori
+
+	elemento1 elemento2 {...} tutti gli elemnto2 contenuti in elemento1 
+				  anche molto "lontani"
+	elemento1>elemento2 {...} tutti gli elemento2 che hanno come padre
+				  elemento1
+	elemento1+elemento2 {...} solo se sono vicini (non contenuti)
+
+	selettore[attribute] seleziona tutti quelli con determinato valore tra
+			     selettori
+		* seleziona TUTTO
+
+css esterno
+	file a parte
+	si usa 
+		<link rel="stylesheet" type="text/css" href="file.css">
+css interno
+	in head
+css in linea
+	nel tag
+
+
+
+-------------------------------------------------------------------------------
+	LINGUAGGI PROCEDURALI SQL
+-------------------------------------------------------------------------------
+Utile per situazioni come:
+Serve calcolare la media dei voti di uno studente data una matricola
+Vedere i dati delle vendite di un marchio in una determinata città
+
+utile ad evitare errori o usi malevoli --> uso SOLO una funzione senza accedere
+a tutto il DB
+
+1 LINGUAGGI SPECIALI
+	Per PostgreSQL si chiama PL/pgSQL (Programming Language for PostgreSQL)
+	Sono linguaggi completi
+2 LINGUAGGI CLASSICI CON PRECOMPILATORE
+	C e C++ che ricevono un codice generato a partire dal codice SQL
+	ECPG per PostgreSQL
+3 LINGUAGGI ESTERNI
+	PHP,Java,C#
+
+Noi useremo la 1 e la 3
+
+
+SQL-3 è lo standard
+
+EMBEDDED SQL -- solo qui, non in esame
+
+codici esecuzione
+SQLSTATE=0 esecuzione corretta
+SQLSTATE<0 errore (diversi significati)
+SQLSTATE=100 vuoto (dipende, con insert è il risultato atteso)
+
+SQLCODE è un alias deprecato di SQLSTATE
+
+
+passaggio di dati
+* risultato di una singola tupla --> definire opportune strutture dati
+* risulatato di pù tuple --> uso un *cursore* --> puntatore a lista da
+  scorrere in maniera sequenziale
+  	
+     CREA CURSORE	declare cursor NOME for QUERY_con_select
+     LANCIO CURSORE	open NOME
+     SPESSO IN UN CICLO	fetch NOME into VAR_programma
+     A FINE CICLO	close NOME
+
+PL/pgSQL
+	* funzione in PL
+		CREATE [OR REPLACE] FUNCTION
+			<nome_funzione>([<param1, ..., paramN>])
+			[RETURNS <resttuzione>]
+		AS $$ 
+			<corpo_funzione>;
+		$$ LANGUAGE plpgsql1
+
+	se metto returns <..>
+	in <corpo_funzione> devo metetre RETURN <exp>
+	
+	* risultato funzione
+		select * from <nome_funzione>
+	
+	* per vedere funzione 
+		\df [+] [nome_funzione]
+
+	* per eliminare 
+		drop ....
+
+	POSSONO esistere funzioni con stesso nome ma parametri diversi
+	 SOMMA(a,b) e SOMMA(a,b,c) possono esistere contemporaneamente
+	MEGLIO di no
+
+	i parametri non hanno un nome ma solo il tipo
+	SOMMA(int,int,int)
+	per distinguerli si usa $1,$2,...
+	posso dare un nome SOMMA(a int,b int,c int) e posos riferirmi al primo
+	con a o con $1
+
+	[DECLARE]
+	//variabili e strutture dati
+	<nome var> [CONSTANT] <tipo dato> [NOT NULL] [{DEFAULT | :=} exp];
+	BEGIN
+	//istruzioni di flusso e comandi sql
+	[EXCEPTION WHEN]
+	//handling di errori
+	END;
+
+
+	<nome var> <nometab.nomeatt>%TYPE variabile è lo stesso tipo dello
+	attributo in quella tabella
+	<nome var> <nometab>%ROW variabile tupla specifica di una tabella
+
+	OGNI istruzione termina con ;
+
+	|| al posto di , per concatenare
+
+	stringhe tra ''
+
+
+	IF cond THEN istr END IF;
+	IF cond THEN istr ELSE istr END IF;
+	IF cond THEN istr ELSIF cond THEN istr ... ELSE istr END IF;
+
+	LOOP
+		istr
+	END LOOP;
+	come do while
+
+
+			funzione per vedere TUTTI gli esami svolti da uno
+			studente
+			funzione che calcola la media di uno studente
+
+			CREATE FUNCTION
+			prova()
+			RETURNS integer
+			AS $$
+				begin
+				return 3;
+				end;
+			$$ LANGUAGE plpgsql

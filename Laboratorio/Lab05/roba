@@ -1,0 +1,23 @@
+--tutti i film dell'anteo
+
+select movie, movie.official_title
+from show inner join movie on movie.id=show.movie
+where cinema_name='ANTEO PALAZZO DEL CINEMA'
+
+--tutti i film del 20 gennaio 2010
+select movie, movie.official_title, cinema_name
+from show inner join movie on movie.id=show.movie
+where showtime between '2010-01-20 00:00:00' and '2010-01-20 23:59:59'
+
+
+--tutti i film più corti di 120 minuti (compreso) in programma
+select id, official_title
+from show inner join movie on movie.id=show.movie
+where movie.length<121
+
+
+--tabella rating FATTO
+
+--inserire valori in rating
+
+insert into 

@@ -1,0 +1,67 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//IT">
+<html>
+	<head>
+		<title>Login</title>
+	</head>
+	<body>
+		<h1> LOGIN </h1>
+		
+		<form style="border: 2px solid black; margin: 10px">
+			First Name
+			<input type="text" name="firstname" placeholder="Name">
+			<br>
+			Last name:
+			<input type="text" name="lastname" placeholder="Last Name">
+			<br>
+			<br>
+			<input type="radio" name="sex" value="male"> M
+			<input type="radio" name="sex" value="female"> F
+			<input type="radio" name="sex" value="prefer not to say" checked> Not your buisness
+			<br>
+			<input type="radio" name="age" value="ofage" checked> I'm of legal age
+			<input type="radio" name="age" value="minor"> I'm underage
+			<br>
+			<br>
+			Mail:
+			<input type="text" name="mail" placeholder="example@host.com">
+			<br>
+			Password:
+			<input type="password" name="password1" placeholder="password">
+			Repeat Password:
+			<input type="password" name="password2" placeholder="retype password">
+			<br>
+			<br>
+			Choose your Character's name:
+			<input type="text" name="charName" placeholder="character's name">>
+			<br>
+			Backstory:<br>
+			<textarea name="backstory" rows="5" cols="60" maxlength="256" placeholder="insert your backstory, 256 characters"></textarea>
+			<br>
+			Choose your race:
+			<select name="race">
+				<option value="h">Human</option>
+				<option value="e">Elf</option>
+				<option value="d">Dwarf</option>
+				<option value="g">Goblin</option>
+				<option value="o">Orc</option>
+				<option value="r">Ratman</option>
+				<option value="u">Undead</option>
+			</select>
+			<br>
+			Choose your class:
+			<select name="class">
+				<option value="f">Fighter</option>
+				<option value="c">Cleric</option>
+				<option value="t">Thief</option>
+				<option value="mu">Magic User</option>
+			</select>
+			<br>
+			<br>
+			Accept the Terms and Conditions?
+			<input type="checkbox" name="accepted">
+			<br>
+			<br>
+			<input type="submit" value="submit">
+		</form>
+	</body>
+</html>
