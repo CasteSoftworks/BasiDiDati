@@ -90,15 +90,30 @@ pellicole nelle quali ha lavorato per ogni ruolo
 number
 
 CREATE TABLE person_stats(
-	person_id integer references person(id) on update cascade on delete cascade,
+	person_id varchar(10) references person(id) on update cascade on delete cascade,
 	given_name varchar(100) NOT null,
 	person_role person_role,
 	perf_number integer,
 	primary key(person_id,person_role)
-	);
+);
+
 --funzione di setup iniziale
 --la riempio a casa
 --uso group by e count
+
+CREATE OR REPLACE FUNCTION p_stats_setup() RETURNS SETOF person_stats AS $$
+DECLARE
+	a_per person_stats%rowtype;
+BEGIN
+	for a_per in select id,given_name,p_role,count(*) from person inner join crew on crew.person = person.id group by id,given_name,p_role order by 1
+	loop
+		return next a_per;
+	end loop;
+END;
+$$ language plpgsql;
+
+insert into person_stats
+select * from p_stats_setup();
 
 --funzione di update
 --O reinizio da 0 ogni volta e riconteggio/cancello/inserisco da nuovo
