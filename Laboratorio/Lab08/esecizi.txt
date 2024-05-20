@@ -100,54 +100,96 @@ CREATE TABLE person_stats(
 --la riempio a casa
 --uso group by e count
 
+CREATE OR REPLACE FUNCTION  p_stats_setup() RETURNS VOID AS $$   
+        DECLARE 
+                b boolean;
+                p_id person.id%TYPE;
+                g_name person.given_name%TYPE;
+                p_ro crew.p_role%TYPE;
+                n_perf integer;
+        BEGIN
+                FOR p_id in select * from person          
+                LOOP 
+                        select id, given_name into p_id, g_name                                  
+                        from person                    
+                        order by 1;
+
+                        select p_role, count(p_role) into p_ro, n_perf
+                        from crew
+                        where crew.person=p_id   
+                        group by p_role
+                        order by 1;
+                                                
+                        insert into
+                        person_stats(person_id,given_name,person_role,perf_number)
+                        values (p_id,g_name,p_ro,n_perf);
+                END LOOP;
+                RETURN;
+        END;
+$$ language plpgsql;
+
+select p_stats_setup()
+
 --funzione di update
 --O reinizio da 0 ogni volta e riconteggio/cancello/inserisco da nuovo
 --O controllo se ci sono o solo NEW, o solo OLD o ENTRAMBI
-CREATE OR REPLACE FUNCTION update_person_stats() RETURNS TRIGGER AS $$
-	DECLARE
-		p_id crew.person%TYPE;
-		p_ro crew.p_role%TYPE;
-	BEGIN
-		IF (TG_OP='DELETE') NULL THEN
-			--è una eliminazione
-			p_id:=OLD.person;
-			p_ro:=OLD.p_role;
-		ELSE
-			--è un aggiornamneto/inserimento
-			p_id:=NEW.person;
-                        p_ro:=NEW.p_role;
-		END IF;
 
-		num_perf:=0;
-		for a_crew in select * FROM crew where person=p_id AND p_role=p_ro
+CREATE OR REPLACE FUNCTION update_person_stats() RETURNS TRIGGER AS $$ 
+DECLARE
+	a_person crew.person%TYPE;
+	persons varchar(10) ARRAY[2];
+	a_crew crew%ROWTYPE;
+	roles varchar ARRAY[4] DEFAULT ARRAY['actor', 'director', 'producer', 'writer'];
+	role_counts integer ARRAY[4];
+	iter integer;
+BEGIN
+	-- si tenga presente che in caso di update, possono essere coinvolte persone diverse e che la modifica può aver cambiato il ruolo della persona in una pellicola 
+	IF (TG_OP = 'INSERT') THEN
+		persons[1] := NEW.person;
+	END IF;
+	IF (TG_OP = 'DELETE') THEN
+		persons[1] := OLD.person;
+	END IF;
+	IF (TG_OP = 'UPDATE') THEN
+		persons[1] := OLD.person;
+		IF (OLD.person <> NEW.person) THEN
+			persons[2] := NEW.person;
+		END IF;
+	END IF;
+
+	FOREACH a_person IN ARRAY persons LOOP
+		role_counts[1] := 0; -- init actor counts
+		role_counts[2] := 0; -- init director counts
+		role_counts[3] := 0; -- init producer counts
+		role_counts[4] := 0; -- init writer counts
+		FOR a_crew IN SELECT * FROM crew WHERE person = a_person
 		LOOP
-			num_perf:=num_perf+1;
+			CASE
+				WHEN a_crew.p_role = roles[1] THEN
+					role_counts[1] := role_counts[1] + 1;
+				WHEN a_crew.p_role = roles[2] THEN
+					role_counts[2] := role_counts[2] + 1;
+				WHEN a_crew.p_role = roles[3] THEN
+					role_counts[3] := role_counts[3] + 1;
+				WHEN a_crew.p_role = roles[4] THEN
+					role_counts[4] := role_counts[4] + 1;
+			END CASE;
+		END LOOP; 
+	
+		-- elimina gli eventuali precedenti valori di a_person in person_stats (non è detto che ci siano)
+		DELETE FROM person_stats WHERE person_id = a_person;
+		FOR iter IN 1..cardinality(roles) LOOP 
+			INSERT INTO person_stats(person_id, person_role, perf_number) VALUES (a_person, roles[iter], role_counts[iter]);
 		END LOOP;
+	END LOOP;
+	
+	RETURN NULL;
+END;
+$$ language 'plpgsql';
+ 
 
-		--verifico che esista o meno in person_stats
-		perform * from person_stats where person_id=p_id and
-		person_role=p_ro
+--con leonardo di caprio
+delete from crew where person='0000138' and movie='5295894';
 
-		IF FOUND THEN
-			UPDATE person_stats SET perf_number=num_perf where
-			person_id=p_id AND person_role=p_ro
-		ELSE
-			select given_name into g_name from person were
-			id=person_id
-
-			insert into
-			person_stats(person_id,given_name,person_role,performance_number)
-			VALUES (p_id,g_name,p_ro,num_perf);
-		END IF;
-
-		RETURN NULL; --è una after, non necessita di altro
-	END;
-
-$$ language plpgsql;
-
-
---trigger AFTER
---DOPO l'inserimento in crew DEVO aggiornare stats
-CREATE TRIGGER update_person_stat_trigger AFTER INSERT OR UPDATE OR DELETE ON
-crew FOR EACH ROW EXECUTE PROCEDURE update_person_stats();
+insert into crew values ('0000138','5295894','actor','Cobb');
 

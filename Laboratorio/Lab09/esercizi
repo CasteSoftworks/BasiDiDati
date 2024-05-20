@@ -1,0 +1,107 @@
+CREATE TABLE movie_score (
+	movie varchar(10) PRIMARY KEY REFERENCES movie(id) ON UPDATE CASCADE ON DELETE CASCADE,
+	rating_number integer,
+	overall_score numeric
+);
+
+-- si consideri il caso del film Inception (id = 1375666) e si aggiungano le seguenti tuple
+INSERT INTO rating VALUES ('2020-11-16', 'BDLAB TA', '1375666', 10, 50, 9.2);
+INSERT INTO rating VALUES ('2020-11-17', 'BDLAB TB', '1375666', 5, 82, 3.9);
+
+CREATE OR REPLACE FUNCTION populate_movie_score() RETURNS VOID AS $$
+DECLARE
+	movie_id movie.id%TYPE;
+	a_rating rating%ROWTYPE;
+	score_value rating.score%TYPE;
+	total_votes rating.votes%TYPE;
+	total_score rating.score%TYPE;
+	num_rating integer;
+
+BEGIN
+
+-- si tenga presente che possono esistere movie senza alcun rating
+	FOR movie_id IN SELECT id FROM movie
+	LOOP
+		total_score := 0;
+		total_votes := 0;
+		num_rating := 0;
+		FOR a_rating IN SELECT * FROM rating WHERE movie = movie_id AND scale <> 0
+			LOOP
+				total_votes:=total_votes+a_rating.votes;
+				total_score:=total_votes+((a_rating.score/a_rating.scale)*10)*a_rating.votes;
+				num_rating:= num_rating+1;
+			END LOOP;
+		IF total_votes <> 0 THEN
+			score_value:=total_score/total_votes;
+		ELSE
+			score_vale:=0;
+		END IF;
+
+		INSERT INTO movie_score(movie,rating_number,overall_score)
+		VALUES (movie_id,num_rating,score_value);
+	END LOOP;
+RETURN;
+END;
+$$ language plpgsql;
+
+CREATE OR REPLACE FUNCTION update_rating_score() RETURNS TRIGGER AS $$
+DECLARE
+	movie_id movie.id%TYPE;
+	movies varchar(10) ARRAY[2];
+	a_rating rating%ROWTYPE;
+	score_value rating.score%TYPE;
+	total_votes rating.votes%TYPE;
+	total_score rating.score%TYPE;
+	num_rating integer;
+BEGIN
+	IF (TG_OP = 'INSERT') THEN
+		movies[1]=NEW.movie;
+	END IF;
+	IF (TG_OP = 'DELETE') THEN
+		movies[1]=OLD.movie;
+	END IF;
+	IF (TG_OP = 'UPDATE') THEN
+		movies[1] := OLD.movie;
+		IF (OLD.movie <> NEW.movie) THEN
+			movies[2] := NEW.movie;
+		END IF;
+	END IF;
+	
+	FOREACH movie_id IN ARRAY movies LOOP
+		total_score:=0;
+		total_votes:=0;
+		num_reating:=0;
+		FOR a_rating IN SELECT * FROM rating WHERE movie=movie_id AND
+		scale<>0
+		LOOP
+			total_score := total_score + ((a_rating.score / a_rating.scale) * 10) * a_rating.votes;
+			total_votes := total_votes + a_rating.votes;
+			num_rating := num_rating + 1;
+		END LOOP; 
+		
+		IF total_votes <> 0 THEN
+			score_value := total_score / total_votes;
+		ELSE
+			score_value := 0;
+		END IF;
+	
+	PERFORM * FROM rating WHERE movie=movie_id
+	IF FOUND THEN
+		UPDATE movie_score SET score=score_value,
+		rating_number=num_rating WHERE movie=movie_id
+	ELSE
+		INSERT INTO movie_score(movie,rating_number,overall_score)
+                VALUES (movie_id,num_rating,score_value);
+	END IF;
+
+	END LOOP;	
+	
+	RETURN NULL;
+
+
+END;
+$$ language plpgsql;
+
+CREATE TRIGGER score_update_trigger AFTER INSERT OR UPDATE OR DELETE ON rating
+FOR EACH ROW EXECUTE PROCEDURE update_rating_score(); 
+		
