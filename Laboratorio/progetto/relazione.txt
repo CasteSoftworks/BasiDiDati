@@ -1,0 +1,31 @@
+                          Giacomo Castellana 11970A
+
+
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                            PROGETTO BASI DI DATI
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+                                 DIAGRAMMA ER
+
+
+
+
+inserire immagine POST stampa
+
+                              SCHEMA RELAZIONALE
+
+*____: primary key
+**___: foreign key
+
+biblioteca(*sede, indirizzo, città)
+libro(*isbn, titolo, casa_ed, trama)
+lettore(*cdf, nome, cognome, tipo, n_ritardi)
+autore(*id, nome, cognome, d_nascita, d_morte, bio)
+bibliotecario(*cdf, nome, cognome, **ufficio)
+prestato(*persona, *id_libro, d_fine)
+copia(*id_libro, **isbn, **dove)
+scritto(*autore, *libro)
+
+
