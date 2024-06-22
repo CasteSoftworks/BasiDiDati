@@ -11,7 +11,7 @@ begin
 	k:=biblioteca.calcolaRitardi(cdf);
 
 	if k>4 then
-		raise exception 'limite di prestiti raggiunto, rivolgersi alla biblioteca';
+		raise exception 'limite di ritardi raggiunto, rivolgersi alla biblioteca';
 	end if;
 	return NEW;
 end;
@@ -98,3 +98,68 @@ $$ language 'plpgsql';
 
 --trigger per controllo se è in ritardo
 create trigger aggiornaRitardo after delete on prestato for each row execute procedure checkRitardo();
+
+--DISPONIBILITA' VOLUME
+--funzione che controlla la disponibilità del volume su copia, e nel caso lo sia
+--fa procedere con il prestito e segna la copia come non disponibile
+create or replace function checkDisponibilita() returns trigger as $$
+declare
+	id_l prestato.volume%TYPE;
+	ok boolean;
+begin
+	id_l:=NEW.volume;
+	
+	select disp into ok
+	from copia
+	where id=id_l;
+
+	if ok=false then
+		raise exception 'Libro già in prestito';
+	else
+		update copia set disp=NOT ok where id=id_l;
+	end if;
+	return NEW;
+end;
+$$ language 'plpgsql';
+
+--trigger on insert su prestato
+create trigger controlloDisponibilita after insert on prestato for each row execute procedure checkDisponibilita();
+
+--      FUNZIONE COLLEGATA CHE, UNA VOLTA RIMOSSO UN LIBRO DAI PRESTITI LO
+--      RIMETTE COME DISPONIBILE
+create or replace function tornaDisponibile() returns trigger as $$
+declare
+	id_l prestato.volume%TYPE;
+begin
+	id_l:=OLD.volume;
+	update copia set disp=true where id=id_l;
+	return NULL;
+end;
+$$ language 'plpgsql';
+
+--trigger su delete da prestito
+create trigger rimettiDisponibile after delete on prestato for each row execute procedure tornaDiponibile();
+
+--ESTENSIONE PRESTITO
+--funzione
+create or replace function estendiPrestito() returns trigger as $$
+declare
+	d_ric date;
+	oggi date;
+	cf lettore.cdf%TYPE;
+begin
+	oggi:=current_date;
+	d_ric:=OLD.d_fine;
+
+	if oggi>d_ric then
+		raise exception 'Non è possibile allungare il periodo di prestito perché il libro è già in ritardo';
+	end if;
+	return NEW;
+	
+end;
+$$ language 'plpgsql';
+
+--trigger on update
+create trigger estensioneData after update on prestato for each row execute procedure estendiPrestito();
+
+
