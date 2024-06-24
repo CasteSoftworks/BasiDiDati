@@ -162,4 +162,154 @@ $$ language 'plpgsql';
 --trigger on update
 create trigger estensioneData after update on prestato for each row execute procedure estendiPrestito();
 
+--STATISTICHE SEDE (tre sottofunzioni più funzione che le chiama)
+--numero volumi
+create or replace function volumiSede(idS varchar(5)) returns bigint as $$
+declare
+	qV bigint;
+begin
+	select count(c.id) into qV
+	from copia c
+	where c.dove=idS;
+	return qV;
+end;
+$$ language 'plpgsql';
+--numero isbn
+create or replace function isbnSede(idS varchar(5)) returns bigint as $$
+declare
+        qI bigint;
+begin               
+        select count(distinct c.libro) into qI   
+        from copia c
+        where c.dove=idS;
+	return qI;
+end;
+$$ language 'plpgsql';
+--numero prestiti
+create or replace function prestitiSede(idS varchar(5)) returns bigint as $$ 
+declare
+        qP bigint;
+begin               
+        select count(c.*) into qP
+        from copia c
+        where c.dove=idS and disp=FALSE;
+        return qP;
+end;
+$$ language 'plpgsql';
+--mega funzione
+create or replace function statSede() returns table(
+	sB varchar(5),
+	qV bigint,
+	qI bigint,
+	qP bigint
+) as $$
+declare
+	biblio biblioteca%ROWTYPE;
+	qVol bigint;
+	qIsb bigint;
+	qPre bigint;
+	ritorno record;
+begin
+	for biblio in select * from biblioteca
+	loop
+		qVol:=biblioteca.volumiSede(biblio.sede);
+		qIsb:=biblioteca.isbnSede(biblio.sede);
+		qPre:=biblioteca.prestitiSede(biblio.sede);
+		
+		return query
+		select biblio.sede,qVol,qIsb,qPre;
 
+	end loop;
+end;
+$$ language 'plpgsql';
+
+--RICERCA ISBN con o senza SEDE
+create or replace function cercaLibroISBN(isRic varchar(17), inRic varchar(100))
+returns table(
+	title varchar(100),
+	codice varchar(17),
+	luogo varchar(100)
+) as $$
+declare
+begin
+        return query
+	select titolo, id, indirizzo
+        from libro l inner join copia c on l.isbn=c.libro inner join   
+        biblioteca b on b.sede=c.dove
+        where l.isbn=isRic and LOWER(b.indirizzo) ILIKE (inRic||'%');
+end;
+$$ language 'plpgsql';
+
+--RICERCA TITOLO con o senza SEDE
+create or replace function cercaLibroTitolo(tiRic varchar(17), inRic varchar(100))
+returns table(
+        title varchar(100),
+        codice varchar(17),
+        luogo varchar(100)
+) as $$
+declare
+begin
+        return query 
+        select titolo, id, indirizzo
+        from libro l inner join copia c on l.isbn=c.libro inner join            
+        biblioteca b on b.sede=c.dove
+        where LOWER(l.titolo)=LOWER(tiRic) and LOWER(b.indirizzo) ILIKE (inRic||'%');
+end;
+$$ language 'plpgsql';
+
+--RITARDI PER SEDE
+--due sottofunzioni (una ritardo una per sede) più una che cicla le sedi
+--per ritardo
+create or replace function vediRitardo(libro varchar(10)) returns boolean as $$
+declare 
+	oggi date;
+	d_f date;
+begin
+	oggi:=current_date;
+	select d_fine into d_f
+	from prestato
+	where volume=libro;
+
+	if oggi>d_f then
+		return true;
+	end if;
+
+	return false;
+end;
+$$ language 'plpgsql';
+--finale
+create or replace function ritardiPerOgniSede() returns table (
+	sede varchar(5),
+	volume varchar(10),
+	chi varchar(16)
+) as $$
+declare
+	ut lettore%ROWTYPE;
+	bi biblioteca%ROWTYPE;
+	cp copia%ROWTYPE;
+	vol prestato.volume%TYPE;
+	ok boolean;
+begin
+	for bi in select * from biblioteca
+	loop
+		for ut in select * from lettore
+		loop
+			for cp in select * from copia
+			loop
+				select p.volume into vol
+				from prestato p
+				where p.persona=ut.cdf and cp.dove=bi.sede and p.volume=cp.id;
+				
+				ok:=vediRitardo(vol);
+				
+				if ok is true then
+					return query 
+					select bi.sede, vol, ut.cdf;
+				end if;
+			end loop;
+		end loop;
+	end loop;
+
+end;
+$$ language 'plpgsql';
+select * from ritardiPerOgniSede();
