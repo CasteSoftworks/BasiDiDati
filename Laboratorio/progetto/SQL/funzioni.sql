@@ -3,10 +3,10 @@
 --controlla che i ritardi siano <5
 create or replace function controllaRitardi() returns trigger as $$
 declare
-	cdf lettore.cdf%TYPE;
+	cdf biblioteca.lettore.cdf%TYPE;
 	k integer;
 begin
-	cdf:=NEW.cdf;
+	cdf:=NEW.persona;
 
 	k:=biblioteca.calcolaRitardi(cdf);
 
@@ -23,7 +23,7 @@ declare
 	nR integer;
 begin
 	select n_ritardi into nR
-	from lettore
+	from biblioteca.lettore
 	where lettore.cdf=cf;
 
 	return nR;
@@ -37,17 +37,17 @@ create trigger controllaRitardi after insert on prestato for each row execute pr
 create or replace function controllaAttivi() returns trigger as $$
 declare
 	quanti bigint;
-	cf lettore.cdf%TYPE;
-	type lettore.tipo%TYPE;
+	cf biblioteca.lettore.cdf%TYPE;
+	type biblioteca.lettore.tipo%TYPE;
 begin
 	cf:=NEW.persona;
 
 	select tipo into type
-	from lettore
+	from biblioteca.lettore
 	where cdf=cf;
 
 	select count(*) into quanti
-	from prestato
+	from biblioteca.prestato
 	where persona=cf;
 	--premium
 	if type=true then
@@ -84,10 +84,10 @@ begin
 
 	if oggi>d_riconsegna then
 		select n_ritardi into rit
-        	from lettore
+        	from biblioteca.lettore
         	where cdf=cf;
         
-        	update lettore  
+        	update biblioteca.lettore  
         	set n_ritardi=(rit+1)
         	where cdf=cf;
 	end if;
@@ -104,19 +104,19 @@ create trigger aggiornaRitardo after delete on prestato for each row execute pro
 --fa procedere con il prestito e segna la copia come non disponibile
 create or replace function checkDisponibilita() returns trigger as $$
 declare
-	id_l prestato.volume%TYPE;
+	id_l biblioteca.prestato.volume%TYPE;
 	ok boolean;
 begin
 	id_l:=NEW.volume;
 	
 	select disp into ok
-	from copia
+	from biblioteca.copia
 	where id=id_l;
 
 	if ok=false then
 		raise exception 'Libro già in prestito';
 	else
-		update copia set disp=NOT ok where id=id_l;
+		update biblioteca.copia set disp=NOT ok where id=id_l;
 	end if;
 	return NEW;
 end;
@@ -129,10 +129,10 @@ create trigger controlloDisponibilita after insert on prestato for each row exec
 --      RIMETTE COME DISPONIBILE
 create or replace function tornaDisponibile() returns trigger as $$
 declare
-	id_l prestato.volume%TYPE;
+	id_l biblioteca.prestato.volume%TYPE;
 begin
 	id_l:=OLD.volume;
-	update copia set disp=true where id=id_l;
+	update biblioteca.copia set disp=true where id=id_l;
 	return NULL;
 end;
 $$ language 'plpgsql';
@@ -169,7 +169,7 @@ declare
 	qV bigint;
 begin
 	select count(c.id) into qV
-	from copia c
+	from biblioteca.copia c
 	where c.dove=idS;
 	return qV;
 end;
@@ -180,7 +180,7 @@ declare
         qI bigint;
 begin               
         select count(distinct c.libro) into qI   
-        from copia c
+        from biblioteca.copia c
         where c.dove=idS;
 	return qI;
 end;
@@ -191,7 +191,7 @@ declare
         qP bigint;
 begin               
         select count(c.*) into qP
-        from copia c
+        from biblioteca.copia c
         where c.dove=idS and disp=FALSE;
         return qP;
 end;
@@ -204,13 +204,13 @@ create or replace function statSede() returns table(
 	qP bigint
 ) as $$
 declare
-	biblio biblioteca%ROWTYPE;
+	biblio biblioteca.biblioteca%ROWTYPE;
 	qVol bigint;
 	qIsb bigint;
 	qPre bigint;
 	ritorno record;
 begin
-	for biblio in select * from biblioteca
+	for biblio in select * from biblioteca.biblioteca
 	loop
 		qVol:=biblioteca.volumiSede(biblio.sede);
 		qIsb:=biblioteca.isbnSede(biblio.sede);
@@ -224,7 +224,7 @@ end;
 $$ language 'plpgsql';
 
 --RICERCA ISBN con o senza SEDE
-create or replace function cercaLibroISBN(isRic varchar(17), inRic varchar(100))
+create or replace function cercaLibroISBN(isRic varchar(17))
 returns table(
 	title varchar(100),
 	codice varchar(17),
@@ -234,14 +234,14 @@ declare
 begin
         return query
 	select titolo, id, indirizzo
-        from libro l inner join copia c on l.isbn=c.libro inner join   
-        biblioteca b on b.sede=c.dove
-        where l.isbn=isRic and LOWER(b.indirizzo) ILIKE (inRic||'%');
+        from biblioteca.libro l inner join biblioteca.copia c on l.isbn=c.libro inner join   
+        biblioteca.biblioteca b on b.sede=c.dove
+        where l.isbn=isRic and b.sede<>'00000';
 end;
 $$ language 'plpgsql';
 
 --RICERCA TITOLO con o senza SEDE
-create or replace function cercaLibroTitolo(tiRic varchar(17), inRic varchar(100))
+create or replace function cercaLibroTitolo(tiRic varchar(17))
 returns table(
         title varchar(100),
         codice varchar(17),
@@ -251,9 +251,9 @@ declare
 begin
         return query 
         select titolo, id, indirizzo
-        from libro l inner join copia c on l.isbn=c.libro inner join            
-        biblioteca b on b.sede=c.dove
-        where LOWER(l.titolo)=LOWER(tiRic) and LOWER(b.indirizzo) ILIKE (inRic||'%');
+        from biblioteca.libro l inner join biblioteca.copia c on l.isbn=c.libro inner join            
+        biblioteca.biblioteca b on b.sede=c.dove
+        where LOWER(l.titolo) LIKE (LOWER(tiRic)||'%') and b.sede<>'00000';
 end;
 $$ language 'plpgsql';
 
@@ -267,7 +267,7 @@ declare
 begin
 	oggi:=current_date;
 	select d_fine into d_f
-	from prestato
+	from biblioteca.prestato
 	where volume=libro;
 
 	if oggi>d_f then
@@ -284,23 +284,23 @@ create or replace function ritardiPerOgniSede() returns table (
 	chi varchar(16)
 ) as $$
 declare
-	ut lettore%ROWTYPE;
-	bi biblioteca%ROWTYPE;
-	cp copia%ROWTYPE;
-	vol prestato.volume%TYPE;
+	ut biblioteca.lettore%ROWTYPE;
+	bi biblioteca.biblioteca%ROWTYPE;
+	cp biblioteca.copia%ROWTYPE;
+	vol biblioteca.prestato.volume%TYPE;
 	ok boolean;
 begin
-	for bi in select * from biblioteca
+	for bi in select * from biblioteca.biblioteca
 	loop
-		for ut in select * from lettore
+		for ut in select * from biblioteca.lettore
 		loop
-			for cp in select * from copia
+			for cp in select * from biblioteca.copia
 			loop
 				select p.volume into vol
-				from prestato p
+				from biblioteca.prestato p
 				where p.persona=ut.cdf and cp.dove=bi.sede and p.volume=cp.id;
 				
-				ok:=vediRitardo(vol);
+				ok:=biblioteca.vediRitardo(vol);
 				
 				if ok is true then
 					return query 
