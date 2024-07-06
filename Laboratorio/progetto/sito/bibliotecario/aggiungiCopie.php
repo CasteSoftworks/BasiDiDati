@@ -4,41 +4,38 @@
 	ini_set("error_reporting", E_ALL);
 	include_once ('../lib/functions.php');
 	
-	if(isset($_POST) && isset($_POST['isbn']) && isset($_POST['titolo']) && isset($_POST['casa_ed']) && isset($_POST['trama'])){
-        $msg=aggiungiLibro($_POST['isbn'], $_POST['titolo'], $_POST['casa_ed'], $_POST['trama']);
+	if(isset($_POST) && isset($_POST['isbn']) && isset($_POST['dove']) && isset($_POST['quanti'])){
+        $msg=aggiungiCopie($_POST['isbn'], $_POST['dove'], $_POST['quanti']);
      }
 ?>
 <!DOCTYPE HTML>
 <html>
 	<head>
-		<title>AGGIUNGERE LIBRO</title>
+		<title>AGGIUNGERE COPIE</title>
 		<?php include_once ('../lib/header.php'); ?>
 	</head>
 	<body>
-		<h1>AGGIUNGERE LIBRO</h1>
+		<h1>AGGIUNGERE COPIE</h1>
 		<div class="questionario">
   		<form action="<?php echo $_SERVER['PHP_SELF'];?>" method="POST">
-          <legend>Inserire i dati del nuovo libro</legend>
+          <legend>Inserire i dati del libro di cui registrare le copie</legend>
   
           <div>     
               <input type="text" placeholder="isbn(CON trattini)" name="isbn" required>
           </div>
-          <div>     
-              <input type="text" placeholder="titolo" name="titolo" required>
+          <div>
+              <input type="text" placeholder="dove vuoi registarlo (id sede)" name="dove" required>
           </div>
           <div>
-              <input type="text" placeholder="casa editrice" name="casa_ed">
-          </div>
-          <div>
-              <input type="text" placeholder="trama" name="trama">
+              <input type="number" placeholder="#copie" name="quanti" required>
           </div>
           <br>
-          <button>aggiungi il libro</button>
+          <button>aggiungi le copie</button>
       </form>
     </div>
     <?php
     if (!empty($msg)) {
-      if($msg=='libro aggiunto'){
+      if($msg=='copie aggiunte'){
     ?>
       <div class="successo">
           <p><?php echo $msg; ?></p>

@@ -1,0 +1,66 @@
+body{
+  background-color: #333333;
+  color: #ababab;
+}
+table, tr, td, th{
+  border: 2px solid;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 2px;
+  background-color: white;
+  color: black;
+}
+th{
+  background-color: #d6b50f;
+  color: white;
+  border: 2px solid black;
+}
+h1{
+  text-align: center;
+  color: #d6b50f;
+}
+h3{
+  color: #d6b50f;
+}
+input{
+  width: 96%;
+  padding: 3px;
+  display: inline-block;
+  border: 2px solid;
+  border-color: black;
+  margin: 2px;
+}
+button{
+  width: 100%;
+  padding: 3px;
+  magin: auto;
+  cursor: pointer;
+  background-color: #d6b50f;
+}
+legend{
+  text-align: center;
+}
+a:link {
+  color: #d6b50f;
+}
+a:visited {
+  color: #806c0a;
+}
+.questionario{
+  color: black;
+  margin: auto;
+  max-width: 350px;
+  background-color: white;
+  padding: 10px;
+}
+.errore{
+  background-color: red;
+  color: white;
+  text-align: center;
+}
+.successo{
+  background-color: green;
+  color: white;
+  text-align: center;
+}

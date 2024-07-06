@@ -7,11 +7,8 @@
 		</title>
 	</head>
 	<body>
-		<div class="contenuto">
 			<h1 class="titlo">BIBLIOTECA</h1>
-
-			<?php include_once('lib/navigation.php'); ?>
-
+			<?php include_once('lib/navBase.php'); ?>
 		</div>
 	</body>
 </html>
