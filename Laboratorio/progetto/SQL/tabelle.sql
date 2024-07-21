@@ -1,11 +1,11 @@
-Biblioteca
+--Biblioteca
 CREATE TABLE biblioteca(
         sede varchar(5) unique not null primary key,
         indirizzo varchar(100) not null,
         citta varchar(30) not null,
 );
 
-Libro
+--Libro
 CREATE TABLE libro(
         isbn varchar(17) unique not null primary key,
         titolo varchar(100) not null,
@@ -13,7 +13,7 @@ CREATE TABLE libro(
 	trama text
 );
 
-Lettore
+--Lettore
 CREATE TABLE lettore(
         cdf varchar(16) unique not null primary key,
         nome varchar(50) not null,
@@ -22,7 +22,7 @@ CREATE TABLE lettore(
 	n_ritardi integer not null
 );
 
-Autore
+--Autore
 CREATE TABLE autore(
         id varchar(8) unique not null primary key,
         nome varchar(50) not null,
@@ -32,7 +32,7 @@ CREATE TABLE autore(
 	bio text
 );
 
-Bibliotecario
+--Bibliotecario
 CREATE TABLE bibliotecario(
 	id varchar(16) unique not null primary key,
 	nome varchar(50) not null,
@@ -40,21 +40,22 @@ CREATE TABLE bibliotecario(
 	ufficio varchar(5) not null references biblioteca(sede)
 );
 
-Scritto
+--Scritto
 CREATE TABLE scritto(
 	autore varchar(8) references autore(id) not null,
 	libro varchar(17) references libro(isbn) not null,
 	primary key (autore,libro)
 );
 
-Copia
+--Copia
 CREATE TABLE copia(
 	id varchar(10) unique not null primary key,
 	libro varchar(17) not null references libro(isbn),
-	dove varchar(5) not null references biblioteca(sede)
+	dove varchar(5) not null references biblioteca(sede),
+	disp boolean
 );
 
-Prestato
+--Prestato
 CREATE TABLE prestato(  
         persona varchar(16) not null references lettore(cdf),
         volume varchar(10) not null references copia(id),
@@ -62,7 +63,12 @@ CREATE TABLE prestato(
 	primary key (persona,volume)
 );
 
-Inserimento libri
+create view statistichesedi as
+	select dove, count(distinct id) as qId, count(distinct libro) as qIs, count(*) filter (where not disp) as qPr
+	from copia
+	group by dove;
+
+--Inserimento libri
 insert into libro(isbn,titolo,casa_ed,trama) values 
 ('978-1-234-56789-7','Il Segreto del Presidente,'Marozzo','Il fosco Presidente
 deve aprire il suo cuore per trovare lo amore'),
@@ -74,39 +80,39 @@ rappresenta il tronco da cui si sono diramate tutte le sue successive opere
 narrative. "Opera prima", dunque, essa costituisce il repertorio mitico di
 Tolkien, quello da cui è derivata la filiazione delle sue favole: "Lo Hobbit",
 "Il Signore degli Anelli", "Il cacciatore di Draghi". "Il Silmarillion", che
-comprende cinque racconti legati come i capitoli di un'unica storia sacra, narra
+comprende cinque racconti legati come i capitoli di una unica storia sacra, narra
 la parabola di una caduta: dalla "musica degli inizi", il momento cosmogonico,
-alla guerra di Elfi e Uomini contro l'Avversario. L'ultimo dei racconti
-costituisce l'antecedente immediato del "Signore degli Anelli"'),
-('978-8-817-06162-9','Eragon','Rizzoli','Quando Eragon trova una liscia pietra blu nella foresta, è convinto che gli sia toccata una grande fortuna: potrà venderla e nutrire la sua famiglia per tutto l'inverno. Ma la pietra in realtà è un uovo. Quando si schiude rivelando il suo straordinario contenuto, un cucciolo di drago, Eragon scopre che gli è toccato in sorte un'eredità antica come l'Impero. Forte di una spada magica e dei consigli di un vecchio cantastorie, dovrà cavarsela in un universo denso di magia, mistero e insidie, imparare a distinguere l'amico dal nemico, dimostrare di essere il degno erede dei Cavalieri dei Draghi.')
+alla guerra di Elfi e Uomini contro lo Avversario. Lo ultimo dei racconti
+costituisce lo antecedente immediato del "Signore degli Anelli"'),
+('978-8-817-06162-9','Eragon','Rizzoli','Quando Eragon trova una liscia pietra blu nella foresta, è convinto che gli sia toccata una grande fortuna: potrà venderla e nutrire la sua famiglia per tutto lo inverno. Ma la pietra in realtà è un uovo. Quando si schiude rivelando il suo straordinario contenuto, un cucciolo di drago, Eragon scopre che gli è toccato in sorte una eredità antica come lo Impero. Forte di una spada magica e dei consigli di un vecchio cantastorie, dovrà cavarsela in un universo denso di magia, mistero e insidie, imparare a distinguere amico da nemico, dimostrare di essere il degno erede dei Cavalieri dei Draghi.');
 
-Inserimento biblioteca
+--Inserimento biblioteca
 insert into biblioteca(sede,indirizzo,citta,provincia) values 
 ('00001','Via Della Stazione 44','Paderno Dugnano'),
 ('00002','Piazza Aspromonte 2','Milano'),
-('00003','Viale Traiano 39','Montelupo Fiorentino')
+('00003','Viale Traiano 39','Montelupo Fiorentino');
 
-Inserimento lettori
+--Inserimento lettori
 insert into lettore(cdf,nome,cognome,tipo,#ritardi) values
 ('BNCLSN80A01H501K','Alessandro','Bianchi',false,0),
 ('RSSLRA85B60H501N','Laura','Rossi',true,1),
-('CNTFRC88D25H501X','Federica','Conti',false,0)
+('CNTFRC88D25H501X','Federica','Conti',false,0);
 
-Inserimento bibliotecario
+--Inserimento bibliotecario
 insert into bibliotecario(cdf,nome,cognome,ufficio) values
 ('MRNGLI90A01H501Z','Giulia','Marini','00002'),
 ('FRRLCA85B20H501M','Luca','Ferretti','00002'),
 ('BNCMRT82C30H501N','Marta','Bianchi','00001'),
-('RSSDVD78D10H501Q','Davide','Rossi','00003')
+('RSSDVD78D10H501Q','Davide','Rossi','00003');
 
-Inserisci autore
+--Inserisci autore
 insert into autore(id,nome,cognome,d_nascita,d_morte,bio) values
 ('00000001','Fizzi','Magistro','1986-03-23',NULL,'Magistro è un grande schermidore
 storico e autore harmony di grande talento'),
 ('00000002','J.R.R.','Tolkien','1892-01-03','1973-09-02','Non necessita di una presentazione'),
-('00000003','Christopher','Paolini','1983-11-17',NULL,'Ha scritto la saga di Eragon da ragazzino')
+('00000003','Christopher','Paolini','1983-11-17',NULL,'Ha scritto la saga di Eragon da ragazzino');
 
-Inserisci copia
+--Inserisci copia
 insert into copia(id,libro,dove) values
 ('000000001','978-1-234-56789-7','00001'),
 ('000000002','978-1-234-56789-7','00002'),
@@ -125,7 +131,7 @@ insert into copia(id,libro,dove) values
 ('00000000F','978-8-817-06162-9','00001'),
 ('000000010','978-8-817-06162-9','00002')
 
-Inserimento scritto
+--Inserimento scritto
 insert into scritto(autore,libro) values
 ('00000001','978-1-234-56789-7'),
 ('00000001','978-0-123-45678-9'),
