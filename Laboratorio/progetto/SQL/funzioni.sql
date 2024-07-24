@@ -74,7 +74,7 @@ create or replace function checkRitardo() returns trigger as $$
 declare
 	oggi date;
 	d_riconsegna date;
-	cf lettore.cdf%TYPE;
+	cf biblioteca.lettore.cdf%TYPE;
 	rit integer;
 begin
 	oggi:=current_date;
@@ -146,7 +146,7 @@ create or replace function estendiPrestito() returns trigger as $$
 declare
 	d_ric date;
 	oggi date;
-	cf lettore.cdf%TYPE;
+	cf biblioteca.lettore.cdf%TYPE;
 begin
 	oggi:=current_date;
 	d_ric:=OLD.d_fine;
