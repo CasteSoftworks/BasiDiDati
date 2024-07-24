@@ -63,10 +63,17 @@ CREATE TABLE prestato(
 	primary key (persona,volume)
 );
 
-create view statistichesedi as
-	select dove, count(distinct id) as qId, count(distinct libro) as qIs, count(*) filter (where not disp) as qPr
-	from copia
-	group by dove;
+create materialized view statistichesedi(
+	with nP as (
+		select s.id as posto, count(distinct c.id) as nPr
+		from biblioteca b left join copia c on b.sede = c.dove and c.disp = FALSE
+		group by b.sede
+	)
+	select b.sede as dove, count(distinct c.id) as qid, count(distinct c.libro) as qis, COALESCE (n.n_prestiti, 0) as qpr
+	from biblioteca b left join copia c on b.sede = c.dove left join nP n on s.sede = n.posto
+	group by b.sede, nP
+	order by b.sede;
+)
 
 --Inserimento libri
 insert into libro(isbn,titolo,casa_ed,trama) values 
