@@ -253,7 +253,7 @@ begin
         select titolo, id, indirizzo
         from biblioteca.libro l inner join biblioteca.copia c on l.isbn=c.libro inner join            
         biblioteca.biblioteca b on b.sede=c.dove
-        where LOWER(l.titolo) LIKE (LOWER(tiRic)||'%') and b.sede<>'00000';
+        where LOWER(l.titolo) LIKE ('%'||LOWER(tiRic)||'%') and b.sede<>'00000';
 end;
 $$ language 'plpgsql';
 
