@@ -31,7 +31,7 @@
     </div>
     <?php
     if (!empty($msg)) {
-      if($msg=='ERRORE, le password non corrispondono'){
+      if(strpos($msg, "ERRORE") !== false){
     ?>
         <div class="errore">
           <p><?php echo $msg; ?></p>
