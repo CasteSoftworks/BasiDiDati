@@ -29,7 +29,7 @@
     </div>
     <?php
     if (!empty($msg)) {
-      if($msg=='sede rimossa'){
+      if(strpos($msg, "rimossa") !== false){
     ?>
       <div class="successo">
           <p><?php echo $msg; ?></p>

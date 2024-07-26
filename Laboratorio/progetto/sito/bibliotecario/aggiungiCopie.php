@@ -35,7 +35,7 @@
     </div>
     <?php
     if (!empty($msg)) {
-      if($msg=='copie aggiunte'){
+      if(strpos($msg, "aggiunte") !== false){
     ?>
       <div class="successo">
           <p><?php echo $msg; ?></p>

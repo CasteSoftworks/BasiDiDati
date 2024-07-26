@@ -38,7 +38,7 @@
     </div>
     <?php
     if (!empty($msg)) {
-      if($msg=='IMPOSSIBILE AGGIORNARE IL MAGAZZINO'){
+      if(strpos($msg, "IMPOSSIBILE") !== false){
     ?>
         <div class="errore">
             <p><?php echo $msg; ?></p>

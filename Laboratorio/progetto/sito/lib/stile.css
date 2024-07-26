@@ -42,16 +42,30 @@ legend{
   text-align: center;
 }
 a:link {
-  color: #d6b50f;
+  color: white;
+  background-color: #d6b50f;
 }
 a:visited {
-  color: #806c0a;
+  color: white;
+  background-color: #806c0a;
+}
+.logmsg{
+  color: black;
+  margin: auto;
+  background-color: white;
+  padding: 10px;
 }
 .questionario{
   color: black;
   margin: auto;
   max-width: 350px;
   background-color: white;
+  padding: 10px;
+}
+.tabella{
+  overflow-y: scroll;
+  max-height:400px;
+  width: auto;
   padding: 10px;
 }
 .errore{

@@ -29,7 +29,7 @@
     </div>
     <?php
     if (!empty($msg)) {
-      if($msg=='libro rimosso'){
+      if(strpos($msg, "rimosso") !== false){
     ?>
     <div class="successo">
         <p><?php echo $msg; ?></p>

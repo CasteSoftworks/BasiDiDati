@@ -13,7 +13,8 @@
 	</head>
 	<body>
 		<h1>RITARDI TOTALI</h1>
-		<table>
+		<div class="tabella">
+		  <table>
         <thead>
             <tr>
                 <th>Codice Biblioteca</th>
@@ -36,6 +37,7 @@
                 </tr>
             <?php } ?>
         </tbody>
-    </table>
-	<body>
+      </table>
+    </div>
+  <body>
 </html>

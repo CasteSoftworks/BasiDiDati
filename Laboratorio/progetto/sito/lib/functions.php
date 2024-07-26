@@ -271,15 +271,29 @@ function rimuoviLibro($isbn){
         $msg="ISBN troppo lungo" ; 
       }else{      
         $db=open_pg_connection();
-        $sql = "DELETE FROM biblioteca.prestato p INNER JOIN biblioteca.copia c ON p.volume=c.id WHERE c.libro=$1";
+        $sql = "SELECT id FROM biblioteca.copia WHERE libro=$1";
         $params = array(
           $isbn
         );
     	
-        $result = pg_prepare($db, "rimozione_prestiti", $sql);
-        $result = pg_execute($db, "rimozione_prestiti", $params);
+        $result = pg_prepare($db, "raccolta_id_da_isbn", $sql);
+        $result = pg_execute($db, "raccolta_id_da_isbn", $params);
         close_pg_connection($db);
         
+        $arr=pg_fetch_all($result);
+        if(!empty($arr)){
+          foreach ($arr as $elem){
+            $db=open_pg_connection();
+            $id=$elem['id'];
+            $sql = "DELETE FROM biblioteca.prestato WHERE volume=$1";
+            $params = array(
+              $id
+            );
+            $result = pg_prepare($db, "regalo_libro", $sql);
+            $result = pg_execute($db, "regalo_libro", $params);
+            close_pg_connection($db);
+          }
+        }
         $db=open_pg_connection();
         $sql = "DELETE FROM biblioteca.scritto WHERE libro=$1";
         $params = array(
@@ -497,7 +511,7 @@ chiama la funzione di DB statsede
 function statisticheSede(){
   $db=open_pg_connection();
   
-  $query = 'SELECT * FROM biblioteca.statsede()';
+  $query = 'SELECT * FROM "biblioteca"."statSedi"';
   $result = pg_prepare($db, "stat_sede", $query);
   $result = pg_execute($db, "stat_sede", array());
   
@@ -558,6 +572,37 @@ function restituisciLibro($cdf, $id){
   return $msg;
 }
 
+function prorogaPrestito($cdf,$id){
+  $db=open_pg_connection();
+  $trentaGG=date('Y-m-d', strtotime("+30 days"));
+
+  $query = 'UPDATE biblioteca.prestato SET D_FINE=$1 WHERE persona=$2 and volume=$3';
+  $params=array(
+    $trentaGG,
+    $cdf,
+    $id
+  );
+  
+  $result = pg_prepare($db, "restituzione_libro", $query);
+  $result = pg_execute($db, "restituzione_libro", $params);
+  $err=pg_last_error($db);
+  
+  if(!empty($err)){
+    $pos = strrpos($err, "CONTEXT");
+    $err=substr($err,0,$pos);
+  }
+  
+  if($result==FALSE){
+    $msg=$err;
+  }else{
+    $msg="proroga effettuata con successo";
+  }
+  
+  close_pg_connection($db);
+  
+  return $msg;
+}
+
 function ricercaIsbn($isbn){
   $db=open_pg_connection();
   
@@ -598,6 +643,7 @@ function ricercaTitolo($titolo){
 
 function prendiPrestito($id,$persona){
   $db=open_pg_connection();
+  $msg='';
   $trentaGG=date('Y-m-d', strtotime("+30 days"));
   $sql = "INSERT INTO biblioteca.prestato VALUES ($1,$2,$3)";
   $params = array(
@@ -608,8 +654,21 @@ function prendiPrestito($id,$persona){
     	
   $result = pg_prepare($db, "presa_prestito", $sql);
   $result = pg_execute($db, "presa_prestito", $params);
+  $err=pg_last_error($db);
+  
+  if(!empty($err)){
+    $pos = strrpos($err, "CONTEXT");
+    $err=substr($err,0,$pos);
+  }
+  
+  if($result==FALSE){
+    $msg=$err;
+  }else{
+    $msg="libro preso in prestito con successo";
+  }
   
   close_pg_connection($db);
+  return $msg;
 }
 
 function aggiornaPasswordL($cdf, $new1, $new2){

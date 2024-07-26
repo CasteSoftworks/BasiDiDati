@@ -22,8 +22,8 @@
 	</head>
 	<body>
 		<h1>GESTIONE MAGAZZINO</h1>
-  		<div style="overflow-y: scroll; max-height:400px;">
-    	<table>
+  	<div class="tabella">
+    	  <table>
           <thead>
               <tr>
                   <th>ID copia</th>
@@ -75,7 +75,7 @@
     </div>
     <?php
    if (!empty($msg)) {
-      if($msg=='IMPOSSIBILE SVUOTARE IL MAGAZZINO'){
+      if(strpos($msg, "IMPOSSIBILE") !== false){
     ?>
         <div class="errore">
           <p><?php echo $msg; ?></p>

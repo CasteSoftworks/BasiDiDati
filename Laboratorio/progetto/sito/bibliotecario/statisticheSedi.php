@@ -13,7 +13,7 @@
 	</head>
 	<body>
 		<h1>STATISTICHE SEDI</h1>
-		<div class="risultati">
+		<div class="tabella">
   		<table>
           <thead>
               <tr>
@@ -24,20 +24,20 @@
               </tr>
           </thead>
           <tbody>
-              <?php if ($a): ?>
-                  <?php foreach ($a as $b): ?>
+              <?php if ($a){
+                  php foreach ($a as $b){?>
                       <tr>
-                          <td><?php echo htmlspecialchars($b['sb']); ?></td>
-                          <td><?php echo htmlspecialchars($b['qv']); ?></td>
-                          <td><?php echo htmlspecialchars($b['qi']); ?></td>
-                          <td><?php echo htmlspecialchars($b['qp']); ?></td>
+                          <td><?php echo htmlspecialchars($b['dove']); ?></td>
+                          <td><?php echo htmlspecialchars($b['qid']); ?></td>
+                          <td><?php echo htmlspecialchars($b['qis']); ?></td>
+                          <td><?php echo htmlspecialchars($b['qpr']); ?></td>
                       </tr>
-                  <?php endforeach; ?>
-              <?php else: ?>
+                  <?php}
+              }else{?>
                   <tr>
                       <td colspan="4">Nessuna statistica trovata</td>
                   </tr>
-              <?php endif; ?>
+              <?php}?>
           </tbody>
       </table>
     </div>

@@ -51,11 +51,9 @@
     if (isset($logged)) {
         $logout_link = $_SERVER['PHP_SELF'] . "?log=del";
     ?>
-    <div>
-    <p>
+    <div class="logmsg">
         <?php echo("Benvenuto $logged"); ?> - 
         <a href="<?php echo($logout_link); ?>">Logout</a> 
-    </p>
     </div>
     <div>
     <?php

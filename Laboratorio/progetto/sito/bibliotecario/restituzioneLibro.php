@@ -17,6 +17,9 @@
 	</head>
 	<body>
     <h1>RESTITUZIONE VOLUME</h1>
+    <div>
+      <?php include_once("visualizzaPrestati.php");?>
+    </div>
     <div class="questionario">
       <form action="<?php echo $_SERVER['PHP_SELF'];?>" method="POST">
         <legend>Inserire i dati del lettore e della copia restituita</legend>
@@ -26,6 +29,7 @@
         </div>
         <div>     
           <input type="text" placeholder="id della copia" name="id" required>
+        </div>
         <br>
         <button>restituisci il libro</button>
       </form>
@@ -39,8 +43,5 @@
     <?php
     }
     ?>
-    
-    
-    
-	<body>
+    <body>
 </html>

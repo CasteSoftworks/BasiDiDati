@@ -1,7 +1,7 @@
 <?php
 	session_start();
-	ini_set ("display_errors", "On");
-	ini_set("error_reporting", E_ALL);
+	ini_set ("display_errors", "on");
+	ini_set("error_reporting", E_ERROR);
 	include_once ('../lib/functions.php');
 	$cdf=$_SESSION['user'];
 	$a=null;
@@ -9,7 +9,7 @@
 	  $a=ricercaIsbn($_POST['isbn']);
 	}
 	if(isset($_POST) && isset($_POST['codice'])){
-	  prendiPrestito($_POST['codice'],$cdf);
+	  $msg=prendiPrestito($_POST['codice'],$cdf);
 	}
 	
 ?>
@@ -31,7 +31,7 @@
           <button>ricerca libro</button>
       </form>
     </div>
-    <div style="overflow-y: scroll; max-height:400px; width: auto;">
+    <div class="tabella">
 		<table>
         <thead>
             <tr>
@@ -66,6 +66,26 @@
         <br>
         <button>prendi in prestito</button>
       </form>
+    </div>
+    <div>
+      <?php
+      if(isset($msg)){
+        if(strpos($msg, "ERROR") !== false){
+          $msg=substr($msg,7);
+        ?>
+        <div class="errore">
+          <p><?php echo $msg; ?></p>
+        </div>
+      <?php
+        }else{
+      ?>
+        <div class="successo">
+          <p><?php echo $msg; ?></p>
+        </div>
+      <?php
+        }
+      }
+      ?>
     </div>
 	<body>
 </html>
