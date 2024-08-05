@@ -257,6 +257,24 @@ begin
 end;
 $$ language 'plpgsql';
 
+--RICERCA AUTORE
+create or replace function cercaLibroAutore(auRic varchar(100))
+returns table(
+        title varchar(100),
+        codice varchar(17),
+        luogo varchar(100)
+) as $$
+declare
+begin
+        return query 
+        select l.titolo, c.id, b.indirizzo
+        from biblioteca.libro l inner join biblioteca.copia c on l.isbn=c.libro inner join            
+        biblioteca.biblioteca b on b.sede=c.dove inner join biblioteca.scritto s 
+	on l.isbn=s.libro inner join biblioteca.autore a on s.autore=a.id
+        where LOWER(a.nome) LIKE ('%'||LOWER(auRic)||'%') and b.sede<>'00000' and c.disp=TRUE;
+end;
+$$ language 'plpgsql';
+
 --RITARDI PER SEDE
 --due sottofunzioni (una ritardo una per sede) più una che cicla le sedi
 --per ritardo
