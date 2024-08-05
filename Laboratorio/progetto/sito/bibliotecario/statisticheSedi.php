@@ -25,19 +25,19 @@
           </thead>
           <tbody>
               <?php if ($a){
-                  php foreach ($a as $b){?>
+                  foreach ($a as $b){?>
                       <tr>
                           <td><?php echo htmlspecialchars($b['dove']); ?></td>
                           <td><?php echo htmlspecialchars($b['qid']); ?></td>
                           <td><?php echo htmlspecialchars($b['qis']); ?></td>
                           <td><?php echo htmlspecialchars($b['qpr']); ?></td>
                       </tr>
-                  <?php}
+                  <?php }
               }else{?>
                   <tr>
                       <td colspan="4">Nessuna statistica trovata</td>
                   </tr>
-              <?php}?>
+              <?php }?>
           </tbody>
       </table>
     </div>

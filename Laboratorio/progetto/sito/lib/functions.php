@@ -1,6 +1,7 @@
 <?php
+//        TUTTI
 /*
-Open connection with PostgreSQL server
+apre una connessione a un server PostgreSQL 
 */
 function open_pg_connection() {
 	include_once('../conf/conf.php');
@@ -12,7 +13,7 @@ function open_pg_connection() {
 }
 
 /*
-Close connection with PostgreSQL server
+chiude una connessione a un server PostgreSQL
 */
 function close_pg_connection($db) {
         
@@ -20,34 +21,9 @@ function close_pg_connection($db) {
     
 }
 
-/*
-esegue il login per il lettore
-*/
-function loginLet($user, $psw) {
-    
-    $logged = null;
+//        BIBLIOTECARIO
 
-    $db = open_pg_connection();
-    
-    $sql = "SELECT cdf FROM biblioteca.lettore WHERE cdf = $1 AND pass = $2";
 
-    $params = array(
-    	$user,
-    	$psw
-    );
-
-    $result = pg_prepare($db, "check_user", $sql);
-    $result = pg_execute($db, "check_user", $params);
-
-    if($row = pg_fetch_assoc($result)){
-    	$logged = $row['cdf'];
-    }
-
-    close_pg_connection($db);
-
-    return $logged;
-    
-}
 /*
 esegue il login per il bibliotecario
 */
@@ -603,6 +579,244 @@ function prorogaPrestito($cdf,$id){
   return $msg;
 }
 
+/*
+permette di aggiungere un autore alla tabella autore
+*/
+function aggiungiAutore($nome,$d_n,$d_m,$bio){
+  $db=open_pg_connection();
+  $id=generaId(8);
+  if($d_n==""){
+    if($d_m==""){
+      if($bio==""){
+        $query = 'INSERT INTO biblioteca.autore (id,nome) VALUES ($1,$2)';
+        $params=array(
+          $id,
+          $nome
+        );
+      }else{
+        $query = 'INSERT INTO biblioteca.autore (id,nome,bio) VALUES ($1,$2,$3)';
+        $params=array(
+          $id,
+          $nome,
+          $bio
+        );
+      }
+    }else{
+      if($bio==""){
+        $query = 'INSERT INTO biblioteca.autore (id,nome,d_morte) VALUES ($1,$2,$3)';
+        $params=array(
+          $id,
+          $nome,
+          $d_m
+        );
+      }else{
+        $query = 'INSERT INTO biblioteca.autore (id,nome,d_morte,bio) VALUES ($1,$2,$3,$4)';
+        $params=array(
+          $id,
+          $nome,
+          $d_m,
+          $bio
+        );
+      }
+    }
+  }else{
+    if($d_m==""){
+      if($bio==""){
+        $query = 'INSERT INTO biblioteca.autore (id,nome,d_nascita) VALUES ($1,$2,$3)';
+        $params=array(
+          $id,
+          $nome,
+          $d_n
+        );
+      }else{
+        $query = 'INSERT INTO biblioteca.autore (id,nome,d_nascita,bio) VALUES ($1,$2,$3,$4)';
+        $params=array(
+          $id,
+          $nome,
+          $d_n,
+          $bio
+        );
+      }
+    }else{
+      if($bio==""){
+        $query = 'INSERT INTO biblioteca.autore (id,nome,d_nascita,d_morte) VALUES ($1,$2,$3,$4)';
+        $params=array(
+          $id,
+          $nome,
+          $d_n,
+          $d_m
+        );
+      }else{
+        $query = 'INSERT INTO biblioteca.autore VALUES ($1,$2,$3,$4,$5)';
+        $params=array(
+          $id,
+          $nome,
+          $d_n,
+          $d_m,
+          $bio
+        );
+      }
+    }
+  }
+  
+  $result = pg_prepare($db, "aggiunta_autore", $query);
+  $result = pg_execute($db, "aggiunta_autore", $params);
+  $err=pg_last_error($db);
+  
+  if(!empty($err)){
+    $pos = strrpos($err, "CONTEXT");
+    $err=substr($err,0,$pos);
+  }
+  
+  if($result==FALSE){
+    $msg=$err;
+  }else{
+    $msg="autore aggiunto con successo";
+  }
+  
+  close_pg_connection($db);
+  
+  return $msg;
+}
+
+/*
+permette di aggiungere una entry su scritto dato un autore e un libro
+*/
+function aggiungiScritto($autore,$libro){ //QUI
+  $db=open_pg_connection();
+  $ok=controllaIsbn($isbn);
+  if($ok==0){
+    $msg="ISBN non nel formato corretto (xxx-xx-xx-xxxxx-x)";
+  }else{
+    if ($ok==1){
+      $msg="ISBN troppo corto";
+    }else{
+      if ($ok==2){
+        $msg="ISBN troppo lungo" ; 
+      }else{
+        $query = 'INSERT INTO biblioteca.scritto VALUES ($1,$2)';
+        $params=array(
+          $autore,
+          $libro
+        );
+        $result = pg_prepare($db, "aggiunta_scritto", $query);
+        $result = pg_execute($db, "aggiunta_scritto", $params);
+        $err=pg_last_error($db);
+      }
+    }
+  }
+        
+  if(!empty($err)){
+    $pos = strrpos($err, "CONTEXT");
+    $err=substr($err,0,$pos);
+  }
+        
+  if($result==FALSE){
+    $msg=$err;
+  }else{
+    $msg="scritto aggiunto con successo";
+  }
+  
+  close_pg_connection($db);
+  
+  return $msg;
+        
+}
+
+/*
+elenca i libri in magazzino
+*/
+function elencoMagazzino(){
+  $db=open_pg_connection();
+  
+  $query = 'SELECT c.id, l.isbn, l.titolo FROM biblioteca.copia c INNER JOIN biblioteca.libro l on c.libro=l.isbn WHERE c.dove=$1';
+  
+  
+  $result = pg_prepare($db, "recupero_elenco_magazzino", $query);
+  $result = pg_execute($db, "recupero_elenco_magazzino", array('00000'));
+  
+  close_pg_connection($db);
+  
+  $arr=pg_fetch_all($result);
+  
+  return $arr;
+}
+/*
+permette di spostare dal magazzino a una sede un determinato libro
+*/
+function spostaDaMagazzino($id, $sede){
+  $db=open_pg_connection();
+  
+  $sql = "UPDATE biblioteca.copia SET dove=$1 WHERE id=$2";
+  $params = array(
+    $sede,
+    $id
+  );
+  
+  $result = pg_prepare($db, "spostamento_da_magazzino", $sql);
+  $result = pg_execute($db, "spostamento_da_magazzino", $params);
+  
+  close_pg_connection($db);
+}
+
+/*
+permette di regalare via i libri nel magazzino
+*/
+function svuotaMagazzino($conf){
+
+  if($conf=="CONFERMO"){
+
+    $db=open_pg_connection();
+    
+    $sql = "DELETE FROM biblioteca.copia WHERE dove=$1";
+    
+    $result = pg_prepare($db, "spostamento_da_magazzino", $sql);
+    $result = pg_execute($db, "spostamento_da_magazzino", array('00000'));
+    
+    close_pg_connection($db);
+    
+    $msg="MAGAZZINO SVUOTATO";
+  }else{
+    $msg="IMPOSSIBILE SVUOTARE IL MAGAZZINO";
+  }
+  
+  return $msg;
+}
+
+//        LETTORE
+
+/*
+esegue il login per il lettore
+*/
+function loginLet($user, $psw) {
+    
+    $logged = null;
+
+    $db = open_pg_connection();
+    
+    $sql = "SELECT cdf FROM biblioteca.lettore WHERE cdf = $1 AND pass = $2";
+
+    $params = array(
+    	$user,
+    	$psw
+    );
+
+    $result = pg_prepare($db, "check_user", $sql);
+    $result = pg_execute($db, "check_user", $params);
+
+    if($row = pg_fetch_assoc($result)){
+    	$logged = $row['cdf'];
+    }
+
+    close_pg_connection($db);
+
+    return $logged;
+    
+}
+
+/*
+permette di cercare un libro tramite ISBN
+*/
 function ricercaIsbn($isbn){
   $db=open_pg_connection();
   
@@ -622,6 +836,9 @@ function ricercaIsbn($isbn){
   return $arr;
 }
 
+/*
+permette di cercare un libro tramite titolo
+*/
 function ricercaTitolo($titolo){
   $db=open_pg_connection();
   
@@ -641,6 +858,31 @@ function ricercaTitolo($titolo){
   return $arr;
 }
 
+/*
+permette di cercare un libro tramite autore
+*/
+function ricercaAutore($autore){
+  $db=open_pg_connection();
+  
+  $query = 'SELECT * FROM biblioteca.cercalibroautore($1)';
+  
+  $params=array(
+    $autore
+  );
+  
+  $result = pg_prepare($db, "ricerca_autore", $query);
+  $result = pg_execute($db, "ricerca_autore", $params);
+  
+  close_pg_connection($db);
+  
+  $arr=pg_fetch_all($result);
+  
+  return $arr;
+}
+
+/*
+fa prendere in prestito una copia
+*/
 function prendiPrestito($id,$persona){
   $db=open_pg_connection();
   $msg='';
@@ -671,6 +913,9 @@ function prendiPrestito($id,$persona){
   return $msg;
 }
 
+/*
+fa aggiornarte la password del lettore
+*/
 function aggiornaPasswordL($cdf, $new1, $new2){
   $db = open_pg_connection();
   $msg = null;
@@ -694,57 +939,7 @@ function aggiornaPasswordL($cdf, $new1, $new2){
   return $msg;
 }
 
-function elencoMagazzino(){
-  $db=open_pg_connection();
-  
-  $query = 'SELECT c.id, l.isbn, l.titolo FROM biblioteca.copia c INNER JOIN biblioteca.libro l on c.libro=l.isbn WHERE c.dove=$1';
-  
-  
-  $result = pg_prepare($db, "recupero_elenco_magazzino", $query);
-  $result = pg_execute($db, "recupero_elenco_magazzino", array('00000'));
-  
-  close_pg_connection($db);
-  
-  $arr=pg_fetch_all($result);
-  
-  return $arr;
-}
 
-function spostaDaMagazzino($id, $sede){
-  $db=open_pg_connection();
-  
-  $sql = "UPDATE biblioteca.copia SET dove=$1 WHERE id=$2";
-  $params = array(
-    $sede,
-    $id
-  );
-  
-  $result = pg_prepare($db, "spostamento_da_magazzino", $sql);
-  $result = pg_execute($db, "spostamento_da_magazzino", $params);
-  
-  close_pg_connection($db);
-}
-
-function svuotaMagazzino($conf){
-
-  if($conf=="CONFERMO"){
-
-    $db=open_pg_connection();
-    
-    $sql = "DELETE FROM biblioteca.copia WHERE dove=$1";
-    
-    $result = pg_prepare($db, "spostamento_da_magazzino", $sql);
-    $result = pg_execute($db, "spostamento_da_magazzino", array('00000'));
-    
-    close_pg_connection($db);
-    
-    $msg="MAGAZZINO SVUOTATO";
-  }else{
-    $msg="IMPOSSIBILE SVUOTARE IL MAGAZZINO";
-  }
-  
-  return $msg;
-}
 
 
 ?>
