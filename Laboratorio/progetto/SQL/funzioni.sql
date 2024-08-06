@@ -241,7 +241,7 @@ end;
 $$ language 'plpgsql';
 
 --RICERCA TITOLO con o senza SEDE
-create or replace function cercaLibroTitolo(tiRic varchar(17))
+create or replace function cercaLibroTitolo(tiRic varchar(100))
 returns table(
         title varchar(100),
         codice varchar(17),
