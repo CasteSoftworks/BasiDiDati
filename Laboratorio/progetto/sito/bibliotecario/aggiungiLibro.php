@@ -38,7 +38,7 @@
     </div>
     <?php
     if (!empty($msg)) {
-      if(strpos($msg, "aggiunto") !== false){
+      if($msg=='libro aggiunto'){
     ?>
       <div class="successo">
           <p><?php echo $msg; ?></p>

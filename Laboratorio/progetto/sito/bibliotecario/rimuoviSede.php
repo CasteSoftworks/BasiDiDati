@@ -3,9 +3,9 @@
 	ini_set ("display_errors", "On");
 	ini_set("error_reporting", E_ALL);
 	include_once ('../lib/functions.php');
-	
+	$cdf=$_SESSION['user'];
 	if(isset($_POST) && isset($_POST['id'])){
-        $msg=rimuoviSede($_POST['id']);
+        $msg=rimuoviSede($_POST['id'],$cdf);
      }
 ?>
 <!DOCTYPE HTML>
@@ -29,7 +29,7 @@
     </div>
     <?php
     if (!empty($msg)) {
-      if(strpos($msg, "rimossa") !== false){
+      if($msg=='sede rimossa'){
     ?>
       <div class="successo">
           <p><?php echo $msg; ?></p>

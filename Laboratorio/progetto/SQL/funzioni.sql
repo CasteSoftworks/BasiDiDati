@@ -331,3 +331,5 @@ begin
 end;
 $$ language 'plpgsql';
 select * from ritardiPerOgniSede();
+
+create trigger lettoreNoneliminabile after delete on lettore for each row execute procedure checkSeHaPrestiti();

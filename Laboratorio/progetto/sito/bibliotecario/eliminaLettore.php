@@ -5,7 +5,7 @@
 	include_once ('../lib/functions.php');
 	
 	if(isset($_POST) && isset($_POST['cdf'])){
-        eliminaUtente($_POST['cdf']);
+        $msg=eliminaUtente($_POST['cdf']);
      }
 ?>
 <!DOCTYPE HTML>
@@ -28,4 +28,21 @@
       </form>
     </div>
 	<body>
+	<?php
+    if (!empty($msg)) {
+      if(strpos($msg, "eliminato") !== false){
+    ?>
+    <div class="successo">
+        <p><?php echo $msg; ?></p>
+    </div>
+    <?php
+      }else{
+    ?>
+    <div class="errore">
+        <p><?php echo $msg; ?></p>
+    </div>
+    <?php
+      }
+    }
+    ?>
 </html>

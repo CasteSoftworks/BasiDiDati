@@ -2,10 +2,10 @@
 	session_start();
 	ini_set ("display_errors", "On");
 	ini_set("error_reporting", E_ALL);
-	include_once ('../lib/functions.php');
-	
-	if(isset($_POST) && isset($_POST['indirizzo']) && isset($_POST['citta'])&& isset($_POST['nome'])){
-        $msg=aggiungiSede($_POST['indirizzo'], $_POST['citta'],$_POST['nome']);
+  include_once ('../lib/functions.php');
+  $cdf=$_SESSION['user'];
+	if(isset($_POST) && isset($_POST['indirizzo']) && isset($_POST['nome'])){
+        $msg=aggiungiSede($_POST['indirizzo'],$_POST['nome'],$cdf);
      }
 ?>
 <!DOCTYPE HTML>
@@ -22,9 +22,6 @@
           <div>     
               <input type="text" placeholder="indirizzo" name="indirizzo" required>
           </div>
-          <div>
-              <input type="text" placeholder="citta" name="citta">
-          </div>
           <div>     
               <input type="text" placeholder="nome" name="nome" required>
           </div>
@@ -34,9 +31,15 @@
       </form>
     </div>
     <?php
-    if (!empty($msg)) {
+    if ($msg=="sede aggiunta") {
     ?>
     <div class="successo">
+        <p><?php echo $msg; ?></p>
+    </div>
+    <?php
+    }else{
+    ?>
+    <div class="errore">
         <p><?php echo $msg; ?></p>
     </div>
     <?php

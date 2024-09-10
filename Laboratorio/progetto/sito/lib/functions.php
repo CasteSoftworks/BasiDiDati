@@ -83,15 +83,35 @@ elimina un utente
 */
 function eliminaUtente($cdf){
   $db = open_pg_connection();
-  $sql = "DELETE FROM biblioteca.lettore WHERE cdf=$1";
+  $msg="";
+  
+  $sql = "SELECT * FROM biblioteca.prestato WHERE persona=$1";
     	$params = array(
     		$cdf
-    	);
+  );
 	
-    	$result = pg_prepare($db, "remove_user", $sql);
-    	$result = pg_execute($db, "remove_user", $params);
+  $result = pg_prepare($db, "controlla_se_ha_prestiti", $sql);
+  $result = pg_execute($db, "controlla_se_ha_prestiti", $params);
+  
+  close_pg_connection($db);  
+  $arr=pg_fetch_all($result);
+  if(!empty($arr)){
+    $msg="ERRORE, impossibile cancellare utente: ha dei prestiti attivi";
+  }else{
+    $db=open_pg_connection();
+    $sql = "DELETE FROM biblioteca.lettore WHERE cdf=$1";
+    $params = array(
+      $cdf
+    );
+	
+    $result = pg_prepare($db, "remove_user", $sql);
+    $result = pg_execute($db, "remove_user", $params);
 
-    	close_pg_connection($db);
+    close_pg_connection($db);
+    $msg="utente eliminato";
+  }
+  
+  return $msg;
 }
 /*
 azzera i ritardi di un utente
@@ -143,7 +163,7 @@ function aggiungiLibro($isbn,$titolo,$casa_ed,$trama){
   $msg=null;
   $ok=controllaIsbn($isbn);
   if($ok==0){
-    $msg="ISBN non nel formato corretto (xxx-x-xxx-xxxxx-x)";
+    $msg="ISBN non nel formato corretto (xxx-xx-xx-xxxxx-x)";
   }else{
     if ($ok==1){
       $msg="ISBN troppo corto";
@@ -178,7 +198,7 @@ function controllaIsbn($isbn){
   }else if(strlen($isbn)>17){
     return 2;
   }
-  if(preg_match('/^\d{3}-\d{1}-\d{3}-\d{5}-\d{1}$/', $isbn)){
+  if(preg_match('/^\d{3}-\d{2}-\d{2}-\d{5}-\d{1}$/', $isbn)){
     return 3;
   }
   
@@ -191,7 +211,7 @@ function aggiungiCopie($isbn,$dove,$quanti){
   $msg=null;
   $ok=controllaIsbn($isbn);
   if($ok==0){
-    $msg="ISBN non nel formato corretto (xxx-x-xxx-xxxxx-x)";
+    $msg="ISBN non nel formato corretto (xxx-xx-xx-xxxxx-x)";
   }else{
     if ($ok==1){
       $msg="ISBN troppo corto";
@@ -238,7 +258,7 @@ rimuove un ISBN dall'elenco
 function rimuoviLibro($isbn){
   $ok=controllaIsbn($isbn);
   if($ok==0){
-    $msg="ISBN non nel formato corretto (xxx-x-xxx-xxxxx-x)";
+    $msg="ISBN non nel formato corretto (xxx-xx-xx-xxxxx-x)";
   }else{
     if ($ok==1){
       $msg="ISBN troppo corto";
@@ -325,29 +345,47 @@ function rimuoviCopia($id){
 /*
 aggiunge una sede
 */
-function aggiungiSede($ind,$cit,$nome){
+function aggiungiSede($ind,$nome,$bibliotecario){
   $db=open_pg_connection();
-  $sede=generaId(5);
-  $sql = "INSERT INTO biblioteca.biblioteca VALUES ($1,$2,$3,$4)";
+    
+  $sql = "SELECT ufficio FROM biblioteca.bibliotecario WHERE cdf=$1";
   $params = array(
-    $sede,
-    $ind,
-    $cit,
-    $nome
+    $bibliotecario
   );
-    	
-  $result = pg_prepare($db, "aggiunta_sede", $sql);
-  $result = pg_execute($db, "aggiunta_sede", $params);
-  
-  $msg="sede aggiunta";
+      	
+  $result = pg_prepare($db, "recupero_ufficio_bibliotecario", $sql);
+  $result = pg_execute($db, "recupero_ufficio_bibliotecario", $params);
+    
   close_pg_connection($db);
+  $a=pg_fetch_result($result,"ufficio");
+  
+  if($a=='00000'){
+    
+    $db=open_pg_connection();
+    
+    $sede=generaId(5);
+    $sql = "INSERT INTO biblioteca.biblioteca VALUES ($1,$2,$3)";
+    $params = array(
+      $sede,
+      $ind,
+      $nome
+    );
+    	
+    $result = pg_prepare($db, "aggiunta_sede", $sql);
+    $result = pg_execute($db, "aggiunta_sede", $params);
+  
+    $msg="sede aggiunta";
+    close_pg_connection($db);
+  }else{
+    $msg="impossibile aggiungere la sede: permessi insufficienti";
+  }
   return $msg;
 }
 
 /*
 rimuove una sede, ma prima sposta tutte le sue copie alla 00000 (il magazzino)
 */
-function rimuoviSede($sede){
+function rimuoviSede($sede,$bibliotecario){
   
   if($sede=='00000'){
     $msg="IMPOSSIBILE CANCELLARE IL MAGAZZINO";
@@ -355,128 +393,161 @@ function rimuoviSede($sede){
 
     $db=open_pg_connection();
     
-    $sql = "SELECT id FROM biblioteca.copia WHERE dove=$1";
+    $sql = "SELECT ufficio FROM biblioteca.bibliotecario WHERE cdf=$1";
     $params = array(
-      $sede
+      $bibliotecario
     );
       	
-    $result = pg_prepare($db, "raccolta_info_copie_in_sede", $sql);
-    $result = pg_execute($db, "raccolta_info_copie_in_sede", $params);
+    $result = pg_prepare($db, "recupero_ufficio_bibliotecario", $sql);
+    $result = pg_execute($db, "recupero_ufficio_bibliotecario", $params);
     
-    close_pg_connection($db);  
-    $arr=pg_fetch_all($result);
-    if(!empty($arr)){
-      foreach ($arr as $elem){
-        $db=open_pg_connection();
-        
-        $id=$elem['id'];
-        
-        $sql = "UPDATE biblioteca.copia SET dove='00000' WHERE id=$1";
-        $params = array(
-          $id
-        );
-          	
-        $result = pg_prepare($db, "spostamento_in_magazzino", $sql);
-        $result = pg_execute($db, "spostamento_in_magazzino", $params);
-        
-        close_pg_connection($db);
-      }
-    }
-    $db=open_pg_connection();
-    $sql = "SELECT id FROM biblioteca.copia c INNER JOIN biblioteca.prestato p ON 
-c.id=p.volume WHERE dove=$1";
-      	
-    $result = pg_prepare($db, "raccolta_info_copie_in_prestito", $sql);
-    $result = pg_execute($db, "raccolta_info_copie_in_prestito", array('00000'));
-    
-    close_pg_connection($db);  
-    $arr=pg_fetch_all($result);
-    if(!empty($arr)){
-      foreach ($arr as $elem){
-        $db=open_pg_connection();
-        
-        $id=$elem['id'];
-        
-        $sql = "DELETE FROM biblioteca.prestato WHERE volume=$1";
-        $params = array(
-          $id
-        );
-          	
-        $result = pg_prepare($db, "regalo_libro", $sql);
-        $result = pg_execute($db, "regalo_libro", $params);
-        
-        close_pg_connection($db);
-      }
-    }
-    
-    $db=open_pg_connection();
-    
-    $sql = "DELETE FROM biblioteca.biblioteca where sede=$1";
-    $params = array(
-      $sede
-    );
-      	
-    $result = pg_prepare($db, "rimozione_sede", $sql);
-    $result = pg_execute($db, "rimozione_sede", $params);
-  
-    $msg="sede rimossa";
     close_pg_connection($db);
+    $a=pg_fetch_result($result,"ufficio");
+    
+    if($a==$sede){ 
+    
+      $db=open_pg_connection();
+      $sql = "UPDATE biblioteca.bibliotecario SET ufficio='00000' WHERE cdf=$1";
+      $params = array(
+        $bibliotecario
+      );
+            	
+      $result = pg_prepare($db, "spostamento_bibliotecario_in_magazzino", $sql);
+      $result = pg_execute($db, "spostamento_bibliotecario_in_magazzino", $params);
+          
+      close_pg_connection($db); 
+    
+      $db=open_pg_connection();
+    
+      $sql = "SELECT id FROM biblioteca.copia WHERE dove=$1";
+      $params = array(
+        $sede
+      );
+        	
+      $result = pg_prepare($db, "raccolta_info_copie_in_sede", $sql);
+      $result = pg_execute($db, "raccolta_info_copie_in_sede", $params);
+      
+      close_pg_connection($db);  
+      $arr=pg_fetch_all($result);
+      if(!empty($arr)){
+        foreach ($arr as $elem){
+          $db=open_pg_connection();
+          
+          $id=$elem['id'];
+          
+          $sql = "UPDATE biblioteca.copia SET dove='00000' WHERE id=$1";
+          $params = array(
+            $id
+          );
+            	
+          $result = pg_prepare($db, "spostamento_in_magazzino", $sql);
+          $result = pg_execute($db, "spostamento_in_magazzino", $params);
+          
+          close_pg_connection($db);
+        }
+      }
+      $db=open_pg_connection();
+      $sql = "SELECT id FROM biblioteca.copia c INNER JOIN biblioteca.prestato p ON 
+  c.id=p.volume WHERE dove=$1";
+        	
+      $result = pg_prepare($db, "raccolta_info_copie_in_prestito", $sql);
+      $result = pg_execute($db, "raccolta_info_copie_in_prestito", array('00000'));
+      
+      close_pg_connection($db);  
+      $arr=pg_fetch_all($result);
+      if(!empty($arr)){
+        foreach ($arr as $elem){
+          $db=open_pg_connection();
+          
+          $id=$elem['id'];
+          
+          $sql = "DELETE FROM biblioteca.prestato WHERE volume=$1";
+          $params = array(
+            $id
+          );
+            	
+          $result = pg_prepare($db, "regalo_libro", $sql);
+          $result = pg_execute($db, "regalo_libro", $params);
+          
+          close_pg_connection($db);
+        }
+      }
+      
+      $db=open_pg_connection();
+      
+      $sql = "DELETE FROM biblioteca.biblioteca where sede=$1";
+      $params = array(
+        $sede
+      );
+        	
+      $result = pg_prepare($db, "rimozione_sede", $sql);
+      $result = pg_execute($db, "rimozione_sede", $params);
+    
+      $msg="sede rimossa";
+      close_pg_connection($db);
+      
+    }else{
+      $msg="sede non rimuovibile: non ufficio di bibliotecario";
+    }
   }
   return $msg;
 }
 /*
 aggiorna una sede su indirizzo, città e nome
 */
-function aggiornaSede($sede, $indirizzo, $citta, $nome){
-  if($sede!='00000'){
-    $msg="aggiornati:";
-    if($indirizzo!=''){
-      $db=open_pg_connection();
+function aggiornaSede($sede, $indirizzo, $nome, $bibliotecario){
+  $db=open_pg_connection();
+    
+  $sql = "SELECT ufficio FROM biblioteca.bibliotecario WHERE cdf=$1";
+  $params = array(
+    $bibliotecario
+  );
+      	
+  $result = pg_prepare($db, "recupero_ufficio_bibliotecario", $sql);
+  $result = pg_execute($db, "recupero_ufficio_bibliotecario", $params);
+    
+  close_pg_connection($db);
+  $a=pg_fetch_result($result,"ufficio");
+    
+  if($a==$sede || $a=='00000'){
+    if($sede=='00000'){
+      $msg="impossibile modificare il magazzino";
+      return $msg;
+    }else{
+      $msg="aggiornato: ";
+      if($indirizzo!=''){
+        $db=open_pg_connection();
       
-      $sql = "UPDATE biblioteca.biblioteca SET indirizzo=$1 WHERE sede=$2";
-      $params = array(
-        $indirizzo,
-        $sede
-      );
+        $sql = "UPDATE biblioteca.biblioteca SET indirizzo=$1 WHERE sede=$2";
+        $params = array(
+          $indirizzo,
+          $sede
+        );
         	
-      $result = pg_prepare($db, "aggiornamento_indirizzo", $sql);
-      $result = pg_execute($db, "aggiornamento_indirizzo", $params);
+        $result = pg_prepare($db, "aggiornamento_indirizzo", $sql);
+        $result = pg_execute($db, "aggiornamento_indirizzo", $params);
       
-      close_pg_connection($db);
-      $msg.=" indirizzo";
-    }
-    if($citta!=''){
-      $db=open_pg_connection();
+        close_pg_connection($db);
+        $msg.=" indirizzo";
+      }
+      if($nome!=''){
+        $db=open_pg_connection();
       
-      $sql = "UPDATE biblioteca.biblioteca SET citta=$1 WHERE sede=$2";
-      $params = array(
-        $citta,
-        $sede
-      );
+        $sql = "UPDATE biblioteca.biblioteca SET nome=$1 WHERE sede=$2";
+        $params = array(
+          $nome,
+          $sede
+        );
         	
-      $result = pg_prepare($db, "aggiornamento_citta", $sql);
-      $result = pg_execute($db, "aggiornamento_citta", $params);
+        $result = pg_prepare($db, "aggiornamento_nome", $sql);
+        $result = pg_execute($db, "aggiornamento_nome", $params);
       
-      close_pg_connection($db);
-      $msg.=", città";
-    }
-    if($nome!=''){
-      $db=open_pg_connection();
-      
-      $sql = "UPDATE biblioteca.biblioteca SET nome=$1 WHERE sede=$2";
-      $params = array(
-        $nome,
-        $sede
-      );
-        	
-      $result = pg_prepare($db, "aggiornamento_nome", $sql);
-      $result = pg_execute($db, "aggiornamento_nome", $params);
-      
-      close_pg_connection($db);
-      $msg.=", nome";
+        close_pg_connection($db);
+        $msg.=", nome";
+      }
     }
   }else{
-    $msg="IMPOSSIBILE AGGIORNARE IL MAGAZZINO";
+    $msg="aggiornamento impossibile: non biblioteca di riferimento";
   }
   
   return $msg;
@@ -781,6 +852,38 @@ function svuotaMagazzino($conf){
   }
   
   return $msg;
+}
+
+function elencoAutori(){
+  $db=open_pg_connection();
+  
+  $query = 'SELECT a.id, a.nome FROM biblioteca.autore a';
+  
+  
+  $result = pg_prepare($db, "recupero_elenco_autori", $query);
+  $result = pg_execute($db, "recupero_elenco_autori", array());
+  
+  close_pg_connection($db);
+  
+  $arr=pg_fetch_all($result);
+  
+  return $arr;
+}
+
+function elencoISBN(){
+  $db=open_pg_connection();
+  
+  $query = 'SELECT l.isbn, l.titolo FROM biblioteca.libro l';
+  
+  
+  $result = pg_prepare($db, "recupero_elenco_isbn", $query);
+  $result = pg_execute($db, "recupero_elenco_isbn", array());
+  
+  close_pg_connection($db);
+  
+  $arr=pg_fetch_all($result);
+  
+  return $arr;
 }
 
 //        LETTORE

@@ -3,9 +3,10 @@
 	ini_set ("display_errors", "On");
 	ini_set("error_reporting", E_ALL);
 	include_once ('../lib/functions.php');
-	
-	if(isset($_POST) && isset($_POST['id']) && isset($_POST['indirizzo']) && isset($_POST['citta'])&& isset($_POST['nome'])){
-        $msg=aggiornaSede($_POST['id'], $_POST['indirizzo'], $_POST['citta'],$_POST['nome']);
+	$cdf=$_SESSION['user'];
+
+	if(isset($_POST) && isset($_POST['id']) && isset($_POST['indirizzo']) && isset($_POST['nome'])){
+        $msg=aggiornaSede($_POST['id'], $_POST['indirizzo'],$_POST['nome'],$cdf);
      }
 ?>
 <!DOCTYPE HTML>
@@ -27,9 +28,6 @@
               <input type="text" placeholder="indirizzo" name="indirizzo">
           </div>
           <div>
-              <input type="text" placeholder="citta" name="citta">
-          </div>
-          <div>
               <input type="text" placeholder="nome" name="nome">
           </div>
           <br>
@@ -38,7 +36,7 @@
     </div>
     <?php
     if (!empty($msg)) {
-      if(strpos($msg, "IMPOSSIBILE") !== false){
+      if(strpos($msg, "impossibile") !== false){
     ?>
         <div class="errore">
             <p><?php echo $msg; ?></p>
