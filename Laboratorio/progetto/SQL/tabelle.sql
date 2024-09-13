@@ -2,7 +2,6 @@
 CREATE TABLE biblioteca(
         sede varchar(5) unique not null primary key,
         indirizzo varchar(100),
-        citta varchar(30),
         nome varchar(100) not null
 );
 
