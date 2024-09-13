@@ -83,6 +83,13 @@ a:visited {
   color: white;
   text-align: center;
 }
+
+.box_dialogo{
+  background-color: white;
+  color: black;
+  text-align: justify;
+}
+
 .navbar {
   overflow: hidden;
   background-color: #d6b50f;

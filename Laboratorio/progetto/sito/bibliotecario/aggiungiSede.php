@@ -31,18 +31,20 @@
       </form>
     </div>
     <?php
-    if ($msg=="sede aggiunta") {
-    ?>
-    <div class="successo">
-        <p><?php echo $msg; ?></p>
-    </div>
-    <?php
-    }else{
-    ?>
-    <div class="errore">
-        <p><?php echo $msg; ?></p>
-    </div>
-    <?php
+    if(isset($msg)){
+      if ($msg=="sede aggiunta") {
+      ?>
+      <div class="successo">
+          <p><?php echo $msg; ?></p>
+      </div>
+      <?php
+      }else{
+      ?>
+      <div class="errore">
+          <p><?php echo $msg; ?></p>
+      </div>
+      <?php
+      }
     }
     ?>
 	<body>

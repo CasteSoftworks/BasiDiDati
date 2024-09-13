@@ -31,6 +31,7 @@
           <button>ricerca libro</button>
       </form>
     </div>
+    <br>
     <div class="tabella">
 		<table>
         <thead>
@@ -57,6 +58,7 @@
         </tbody>
     </table>
     </div>
+    <br>
     <div class="questionario">
       <form action="<?php echo $_SERVER['PHP_SELF'];?>" method="POST">
         <legend>seleziona la copia che desideri</legend>

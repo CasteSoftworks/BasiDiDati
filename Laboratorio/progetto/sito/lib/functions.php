@@ -330,17 +330,37 @@ rimuove una determinata copia
 */
 function rimuoviCopia($id){
   $db=open_pg_connection();
-  $sql = "DELETE FROM biblioteca.copia WHERE id=$1";
+  $sql = "SELECT * FROM biblioteca.copia WHERE id=$1";
   $params = array(
     $id
   );
     	
-  $result = pg_prepare($db, "rimozione_copia", $sql);
-  $result = pg_execute($db, "rimozione_copia", $params);
+  $result = pg_prepare($db, "controllo_prestito", $sql);
+  $result = pg_execute($db, "controllo_prestito", $params);
   
-  $msg="copia rimossa";
   close_pg_connection($db);
-  return $msg;
+  
+  $a=pg_fetch_result($result,"disp");
+  
+  if($a==1){
+  
+    $db=open_pg_connection();
+    $sql = "DELETE FROM biblioteca.copia WHERE id=$1";
+    $params = array(
+      $id
+    );
+      	
+    $result = pg_prepare($db, "rimozione_copia", $sql);
+    $result = pg_execute($db, "rimozione_copia", $params);
+    
+    $msg="copia rimossa";
+    close_pg_connection($db);
+    
+    return $msg;
+  }else{
+    $msg="copia non rimuovibile, ancora in prestito";
+    return $msg;
+  }
 }
 /*
 aggiunge una sede
@@ -404,7 +424,7 @@ function rimuoviSede($sede,$bibliotecario){
     close_pg_connection($db);
     $a=pg_fetch_result($result,"ufficio");
     
-    if($a==$sede){ 
+    if($a==$sede || $a=='00000'){ 
     
       $db=open_pg_connection();
       $sql = "UPDATE biblioteca.bibliotecario SET ufficio='00000' WHERE cdf=$1";
@@ -754,8 +774,8 @@ function aggiungiAutore($nome,$d_n,$d_m,$bio){
 permette di aggiungere una entry su scritto dato un autore e un libro
 */
 function aggiungiScritto($autore,$libro){ //QUI
-  $db=open_pg_connection();
-  $ok=controllaIsbn($isbn);
+  
+  $ok=controllaIsbn($libro);
   if($ok==0){
     $msg="ISBN non nel formato corretto (xxx-xx-xx-xxxxx-x)";
   }else{
@@ -765,6 +785,7 @@ function aggiungiScritto($autore,$libro){ //QUI
       if ($ok==2){
         $msg="ISBN troppo lungo" ; 
       }else{
+        $db=open_pg_connection();
         $query = 'INSERT INTO biblioteca.scritto VALUES ($1,$2)';
         $params=array(
           $autore,
@@ -773,25 +794,25 @@ function aggiungiScritto($autore,$libro){ //QUI
         $result = pg_prepare($db, "aggiunta_scritto", $query);
         $result = pg_execute($db, "aggiunta_scritto", $params);
         $err=pg_last_error($db);
+        
+        if(!empty($err)){
+          $pos = strrpos($err, "CONTEXT");
+          $err=substr($err,0,$pos);
+        }
+              
+        if($result==FALSE){
+          $msg=$err;
+        }else{
+          $msg="scritto aggiunto con successo";
+        }
+        
+        close_pg_connection($db);
+        
+        return $msg;
       }
     }
   }
-        
-  if(!empty($err)){
-    $pos = strrpos($err, "CONTEXT");
-    $err=substr($err,0,$pos);
-  }
-        
-  if($result==FALSE){
-    $msg=$err;
-  }else{
-    $msg="scritto aggiunto con successo";
-  }
-  
-  close_pg_connection($db);
-  
-  return $msg;
-        
+  return $msg;       
 }
 
 /*
@@ -1039,6 +1060,46 @@ function aggiornaPasswordL($cdf, $new1, $new2){
   }
   
   close_pg_connection($db);
+  return $msg;
+}
+
+/*
+fa aggiornarte la password del lettore
+*/
+function mostraInfoLibro($isbn){
+  $ok=controllaIsbn($isbn);
+  if($ok==0){
+    $msg="ERRORE ISBN non nel formato corretto (xxx-xx-xx-xxxxx-x)";
+  }else{
+    if ($ok==1){
+      $msg="ERRORE ISBN troppo corto";
+    }else{
+      if ($ok==2){
+        $msg="ERRORE ISBN troppo lungo" ; 
+      }else{
+        $db = open_pg_connection();
+        $msg = null;
+        
+        $sql = "SELECT * FROM biblioteca.libro WHERE isbn=$1";
+        $params = array(
+          $isbn
+        );
+          	
+        $result = pg_prepare($db, "recupero_info", $sql);
+        $result = pg_execute($db, "recupero_info", $params);
+        
+        close_pg_connection($db);
+        
+        $info=pg_fetch_assoc($result);
+    
+        if(!empty($info)){
+          $msg=implode("<br>",$info);
+        }else{
+          $msg="ERRORE Libro non trovato"; 
+        }
+      }
+    }
+  }
   return $msg;
 }
 

@@ -20,9 +20,10 @@
 	</head>
 	<body>
 		<h1>RICERCA PER TITOLO</h1>
+		<br>
 		<div class="questionario">
 		  <form action="<?php echo $_SERVER['PHP_SELF'];?>" method="POST">
-        <legend>Inserisci ISBN</legend>
+        <legend>Inserisci titolo</legend>
         <div>     
             <input type="text" placeholder="titolo" name="titolo">
         </div>
@@ -56,6 +57,7 @@
         </tbody>
     </table>
     </div>
+    <br>
     <div class="questionario">
       <form action="<?php echo $_SERVER['PHP_SELF'];?>" method="POST">
         <legend>seleziona la copia che desideri</legend>

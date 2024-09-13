@@ -2,40 +2,33 @@
 	ini_set ("display_errors", "On");
 	ini_set("error_reporting", E_ALL);
 	include_once ('../lib/functions.php'); 
+  $logged = null;
 
-    /*
-     * Si inserisca il codice necessario per gestire il login degli utenti.
-     * Solo gli utenti con credenziali valide possono accedere alle funzionalità dell'applicazione.
-     */
-    $logged = null;
+  session_start();
 
-    session_start();
-
-    // controlla il login
-    $error_msg =null;
-    if(isset($_POST) && isset($_POST['usr']) && isset($_POST['psw'])){
-        $logged = loginBib($_POST['usr'], $_POST['psw']);
-        if (is_null($logged)) {
-            // utente non trovato
-            $error_msg = 'Credenziali errate. Ripetere il login';
-        }
-     }
+  $error_msg =null;
+  if(isset($_POST) && isset($_POST['usr']) && isset($_POST['psw'])){
+    $logged = loginBib($_POST['usr'], $_POST['psw']);
+    if (is_null($logged)) {
+      $error_msg = 'Credenziali errate. Ripetere il login';
+    }
+  }
 
     // imposta la variabile $logges se esiste una sessione aperta
-    if(isset($_SESSION['user'])){
-        $logged = $_SESSION['user'];
-    }
+  if(isset($_SESSION['user'])){
+    $logged = $_SESSION['user'];
+  }
     
     // aggiorna la variabile di sessione
-    if(isset($logged)) {
-        $_SESSION['user'] = $logged;
-    }
+  if(isset($logged)) {
+    $_SESSION['user'] = $logged;
+  }
 
     // inizializza $logged se l'utente fa logout
-    if(isset($_GET) && isset($_GET['log']) && $_GET['log'] == 'del'){
-        unset($_SESSION['user']);
-        $logged = null;
-    }
+  if(isset($_GET) && isset($_GET['log']) && $_GET['log'] == 'del'){
+    unset($_SESSION['user']);
+    $logged = null;
+  }
 ?>
 <!DOCTYPE html>
 <html>

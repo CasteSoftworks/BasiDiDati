@@ -40,10 +40,16 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <?php include_once ('../lib/header.php'); ?>
-        <title>
-        HOMEPAGE LETTORE
-        </title>
+        <?php include_once ('../lib/header.php'); 
+        if(isset($logged)){?>
+          <title>
+          HOMEPAGE LETTORE
+          </title>
+        <?php }else{ ?>
+          <title>
+          LOGIN LETTORE
+          </title>
+          <?php } ?>
     </head>
     <body>
     <div>

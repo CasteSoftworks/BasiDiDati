@@ -20,6 +20,7 @@
 	</head>
 	<body>
 		<h1>RICERCA PER AUTORE</h1>
+		<br>
 		<div class="questionario">
 		  <form action="<?php echo $_SERVER['PHP_SELF'];?>" method="POST">
         <legend>Inserisci il nome dell'autore</legend>
@@ -56,6 +57,7 @@
         </tbody>
     </table>
     </div>
+    <br>
     <div class="questionario">
       <form action="<?php echo $_SERVER['PHP_SELF'];?>" method="POST">
         <legend>seleziona la copia che desideri</legend>

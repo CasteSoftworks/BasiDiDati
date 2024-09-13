@@ -5,7 +5,7 @@
 	include_once ('../lib/functions.php');
 	
 	
-	if(isset($_POST) && isset($_POST['nome'])){
+	if(isset($_POST) && isset($_POST['autore']) && isset($_POST['isbn'])){
         $msg=aggiungiScritto($_POST['autore'], $_POST['isbn']);
      }
 ?>
@@ -31,7 +31,7 @@
       <legend>Inserire l'id dell'autore e l'isbn del libro da lui scritto</legend>
   
       <div>     
-        <input type="text" placeholder="id autore" name="id" required>
+        <input type="text" placeholder="id autore" name="autore" required>
       </div>
           
       <div>

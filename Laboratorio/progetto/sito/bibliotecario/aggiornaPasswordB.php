@@ -4,7 +4,7 @@
 	ini_set("error_reporting", E_ALL);
 	include_once ('../lib/functions.php');
 	$cdf=$_SESSION['user'];
-	if(isset($_POST) && isset($cdf) && isset($_POST['new1'])&& isset($_POST['new2'])){
+	if(isset($_POST) && isset($_POST['new1'])&& isset($_POST['new2'])){
         $msg=aggiornaPasswordB($cdf,$_POST['new1'],$_POST['new2']);
      }
 ?>

@@ -29,11 +29,19 @@
     </div>
     <?php
     if (!empty($msg)) {
-    ?>
-    <div class="successo">
-        <p><?php echo $msg; ?></p>
-    </div>
+    
+      if($msg=="copia rimossa"){?>
+      <div class="successo">
+          <p><?php echo $msg; ?></p>
+      </div>
     <?php
+      }else{
+    ?>
+      <div class="errore">
+          <p><?php echo $msg; ?></p>
+      </div>
+    <?php
+      }
     }
     ?>
 	<body>
