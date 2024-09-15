@@ -16,6 +16,8 @@
 	</head>
 	<body>
 		<h1>RIMUOVI COPIA</h1>
+		<?php include_once ('elencaCopie.php'); ?>
+		<br>
 		<div class="questionario">
   		  <form action="<?php echo $_SERVER['PHP_SELF'];?>" method="POST">
         <legend>Inserire i dati della copia da rimuovere</legend>

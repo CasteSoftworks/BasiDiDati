@@ -1,7 +1,7 @@
 <?php
 	session_start();
 	ini_set ("display_errors", "On");
-	ini_set("error_reporting", E_ALL);
+	ini_set("error_reporting", E_ERROR);
 	include_once ('../lib/functions.php');
 	
 	if(isset($_POST) && isset($_POST['isbn'])){
@@ -16,6 +16,8 @@
 	</head>
 	<body>
 		<h1>RIMOVI LIBRO</h1>
+		<?php include_once("./elencaLibri.php"); ?>
+	  <br>
   		<div class="questionario">
   		  <form action="<?php echo $_SERVER['PHP_SELF'];?>" method="POST">
         <legend>Inserire i dati del libro da rimuovere</legend>

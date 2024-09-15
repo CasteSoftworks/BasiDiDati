@@ -16,6 +16,15 @@
 	</head>
 	<body>
 		<h1>AGGIUNGERE COPIE</h1>
+	  <div style="display: flex;">
+      <div style="flex: 1;">
+  	      <?php include_once("./elencaLibri.php"); ?>
+      </div>
+      <div style="flex: 1;">
+  	      <?php include_once("./elencaSedi.php"); ?>
+      </div>
+    </div>
+	  <br>
 		<div class="questionario">
   		<form action="<?php echo $_SERVER['PHP_SELF'];?>" method="POST">
           <legend>Inserire i dati del libro di cui registrare le copie</legend>

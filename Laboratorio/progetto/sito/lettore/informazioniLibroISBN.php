@@ -3,9 +3,8 @@
 	ini_set ("display_errors", "on");
 	ini_set("error_reporting", E_ERROR);
 	include_once ('../lib/functions.php');
-	$cdf=$_SESSION['user'];
 	if(isset($_POST) && isset($_POST['isbn'])){
-	  $msg=mostraInfoLibro($_POST['isbn']);
+	  $msg=mostraInfoLibroISBN($_POST['isbn']);
 	}
 	
 ?>

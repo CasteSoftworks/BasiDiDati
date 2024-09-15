@@ -770,6 +770,44 @@ function aggiungiAutore($nome,$d_n,$d_m,$bio){
   return $msg;
 }
 
+function rimuoviAutore($autore){
+  $db=open_pg_connection();
+  $query="SELECT * FROM biblioteca.autore WHERE id=$1";
+  $params=array(
+    $autore
+  );
+  $result = pg_prepare($db, "controllo_esistenza_scrittore", $query);
+  $result = pg_execute($db, "controllo_esistenza_scrittore", $params);
+  close_pg_connection($db);
+  
+  $a=pg_fetch_assoc($result);
+  
+  if(!empty($a)){
+    $db=open_pg_connection();
+    $query="DELETE FROM biblioteca.scritto WHERE autore=$1";
+    $params=array(
+      $autore
+    );
+    $result = pg_prepare($db, "rimozione_vincolo_scrittura", $query);
+    $result = pg_execute($db, "rimozione_vincolo_scrittura", $params);
+    close_pg_connection($db);
+    
+    $db=open_pg_connection();
+    $query="DELETE FROM biblioteca.autore WHERE id=$1";
+    $params=array(
+      $autore
+    );
+    $result = pg_prepare($db, "rimozione_autore", $query);
+    $result = pg_execute($db, "rimozione_autore", $params);
+    close_pg_connection($db);
+    
+    $msg="autore rimosso";
+  }else{
+    $msg="autore non esistente";
+  }
+  return $msg;  
+}
+
 /*
 permette di aggiungere una entry su scritto dato un autore e un libro
 */
@@ -874,7 +912,9 @@ function svuotaMagazzino($conf){
   
   return $msg;
 }
-
+/*
+mostra l'elenco degli autori
+*/
 function elencoAutori(){
   $db=open_pg_connection();
   
@@ -890,7 +930,9 @@ function elencoAutori(){
   
   return $arr;
 }
-
+/*
+mostra l'elenco degli ISBN
+*/
 function elencoISBN(){
   $db=open_pg_connection();
   
@@ -899,6 +941,42 @@ function elencoISBN(){
   
   $result = pg_prepare($db, "recupero_elenco_isbn", $query);
   $result = pg_execute($db, "recupero_elenco_isbn", array());
+  
+  close_pg_connection($db);
+  
+  $arr=pg_fetch_all($result);
+  
+  return $arr;
+}
+/*
+mostra l'elenco delle copie NON nel magazzino
+*/
+function elencoCopie(){
+  $db=open_pg_connection();
+  
+  $query = 'SELECT c.id, c.dove FROM biblioteca.copia c WHERE c.dove<>$1';
+  
+  
+  $result = pg_prepare($db, "recupero_elenco_copie", $query);
+  $result = pg_execute($db, "recupero_elenco_copie", array('00000'));
+  
+  close_pg_connection($db);
+  
+  $arr=pg_fetch_all($result);
+  
+  return $arr;
+}
+/*
+mostra l'elenco delle sedi escluso il magazzino
+*/
+function elencoSede(){
+  $db=open_pg_connection();
+  
+  $query = 'SELECT b.sede, b.nome, b.indirizzo FROM biblioteca.biblioteca b WHERE b.sede<>$1';
+  
+  
+  $result = pg_prepare($db, "recupero_elenco_sedi", $query);
+  $result = pg_execute($db, "recupero_elenco_sedi", array('00000'));
   
   close_pg_connection($db);
   
@@ -1064,9 +1142,9 @@ function aggiornaPasswordL($cdf, $new1, $new2){
 }
 
 /*
-fa aggiornarte la password del lettore
+mostra le informazioni di un volume partendo dall'ISBN
 */
-function mostraInfoLibro($isbn){
+function mostraInfoLibroISBN($isbn){
   $ok=controllaIsbn($isbn);
   if($ok==0){
     $msg="ERRORE ISBN non nel formato corretto (xxx-xx-xx-xxxxx-x)";
@@ -1078,27 +1156,100 @@ function mostraInfoLibro($isbn){
         $msg="ERRORE ISBN troppo lungo" ; 
       }else{
         $db = open_pg_connection();
-        $msg = null;
         
-        $sql = "SELECT * FROM biblioteca.libro WHERE isbn=$1";
+        $sql = "SELECT l.* FROM biblioteca.libro l WHERE l.isbn=$1";
         $params = array(
           $isbn
         );
           	
-        $result = pg_prepare($db, "recupero_info", $sql);
-        $result = pg_execute($db, "recupero_info", $params);
+        $result = pg_prepare($db, "recupero_info_isbn", $sql);
+        $result = pg_execute($db, "recupero_info_isbn", $params);
         
         close_pg_connection($db);
         
         $info=pg_fetch_assoc($result);
     
         if(!empty($info)){
-          $msg=implode("<br>",$info);
+          $msg="<b>ISBN:</b> ".$info['isbn']."<br><b>Titolo:</b> ".$info['titolo']."<br><b>Casa Editrice:</b> ".$info['casa_ed']."<br><b>Trama:</b> ".$info['trama'];
+          
+          $db = open_pg_connection();
+        
+          $sql = "SELECT a.nome FROM biblioteca.autore a INNER JOIN biblioteca.scritto s ON a.id=s.autore WHERE s.libro=$1";
+          $params = array(
+            $isbn
+          );
+            	
+          $result = pg_prepare($db, "recupero_info_autore", $sql);
+          $result = pg_execute($db, "recupero_info_autore", $params);
+          
+          close_pg_connection($db);
+          
+          $info=pg_fetch_all($result);
+          if(!empty($info)){
+            $msg.="<hr><b>Scritto da:</b><br>";
+            foreach($info as $i){
+              $msg.=$i[nome]."<br>";
+            }
+          }else{
+            $msg.="<br>";
+            $msg.="<hr>autore/i non trovato";
+          }
         }else{
           $msg="ERRORE Libro non trovato"; 
         }
       }
     }
+  }
+  return $msg;
+}
+
+/*
+mostra le informazioni di un volume partendo dal titolo
+*/
+function mostraInfoLibroTitolo($titolo){
+  $db = open_pg_connection();
+  $msg = null;
+        
+  $sql = "SELECT * FROM biblioteca.libro WHERE titolo=$1";
+  $params = array(
+    $titolo
+  );
+          	
+  $result = pg_prepare($db, "recupero_info_titolo", $sql);
+  $result = pg_execute($db, "recupero_info_titolo", $params);
+        
+  close_pg_connection($db);
+        
+  $info=pg_fetch_assoc($result);
+  $isbn=$info['isbn'];
+    
+  if(!empty($info)){
+    $msg="<b>ISBN:</b> ".$info['isbn']."<br><b>Titolo:</b> ".$info['titolo']."<br><b>Casa Editrice:</b> ".$info['casa_ed']."<br><b>Trama:</b> ".$info['trama'];
+          
+    $db = open_pg_connection();
+        
+    $sql = "SELECT a.nome FROM biblioteca.autore a INNER JOIN biblioteca.scritto s ON a.id=s.autore WHERE s.libro=$1";
+    $params = array(
+      $isbn
+    );
+            	
+    $result = pg_prepare($db, "recupero_info_autore", $sql);
+    $result = pg_execute($db, "recupero_info_autore", $params);
+          
+    close_pg_connection($db);
+          
+    $info=pg_fetch_all($result);
+    if(!empty($info)){
+      $msg.="<hr><b>Scritto da:</b><br>";
+      foreach($info as $i){
+        $msg.=$i[nome]."<br>";
+      }
+    }else{
+      $msg.="<br>";
+      $msg.="<hr>autore/i non trovato";
+     }
+  }else{
+    $msg="ERRORE Libro non trovato"; 
   }
   return $msg;
 }

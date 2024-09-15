@@ -24,7 +24,7 @@
               <input type="text" placeholder="nome" name="nome" required>
           </div>
           <div>     
-              <input type="date" placeholder="data di nascita" name="d_nascita" required>
+              <input type="date" placeholder="data di nascita" name="d_nascita">
           </div>
           <div>
               <input type="date" placeholder="data di morte" name="d_morte">

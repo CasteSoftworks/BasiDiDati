@@ -8,8 +8,8 @@
         </tr>
     </thead>
     <tbody>
-    <?php if ($a){
-        foreach ($a as $b){?>
+    <?php if ($c){
+        foreach ($c as $d){?>
           <tr>
             <td><?php echo htmlspecialchars($d['isbn']); ?></td>
             <td><?php echo htmlspecialchars($d['titolo']); ?></td>

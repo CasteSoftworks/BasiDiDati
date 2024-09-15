@@ -1,7 +1,7 @@
 <?php
 	session_start();
 	ini_set ("display_errors", "On");
-	ini_set("error_reporting", E_ALL);
+	ini_set("error_reporting", E_ERROR);
 	include_once ('../lib/functions.php');
 	
 	
