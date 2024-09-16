@@ -42,9 +42,7 @@ ALTER TABLE IF EXISTS ONLY biblioteca.bibliotecario DROP CONSTRAINT IF EXISTS bi
 ALTER TABLE IF EXISTS ONLY biblioteca.autore DROP CONSTRAINT IF EXISTS autore_pkey;
 DROP TABLE IF EXISTS public.movie;
 DROP TABLE IF EXISTS public.country;
-DROP MATERIALIZED VIEW IF EXISTS biblioteca.statisticheseditot;
 DROP VIEW IF EXISTS biblioteca."statSedi";
-DROP MATERIALIZED VIEW IF EXISTS biblioteca.staistichesedi;
 DROP TABLE IF EXISTS biblioteca.scritto;
 DROP TABLE IF EXISTS biblioteca.prestato;
 DROP TABLE IF EXISTS biblioteca.libro;
@@ -554,22 +552,6 @@ CREATE TABLE biblioteca.scritto (
 ALTER TABLE biblioteca.scritto OWNER TO giacomo_castellana;
 
 --
--- Name: staistichesedi; Type: MATERIALIZED VIEW; Schema: biblioteca; Owner: giacomo_castellana
---
-
-CREATE MATERIALIZED VIEW biblioteca.staistichesedi AS
- SELECT c.dove,
-    count(DISTINCT c.id) AS qi,
-    count(DISTINCT c.libro) AS qv,
-    count(c.*) AS qp
-   FROM biblioteca.copia c
-  GROUP BY c.dove
-  WITH NO DATA;
-
-
-ALTER TABLE biblioteca.staistichesedi OWNER TO giacomo_castellana;
-
---
 -- Name: statSedi; Type: VIEW; Schema: biblioteca; Owner: giacomo_castellana
 --
 
@@ -593,32 +575,6 @@ CREATE VIEW biblioteca."statSedi" AS
 
 
 ALTER TABLE biblioteca."statSedi" OWNER TO giacomo_castellana;
-
---
--- Name: statisticheseditot; Type: MATERIALIZED VIEW; Schema: biblioteca; Owner: giacomo_castellana
---
-
-CREATE MATERIALIZED VIEW biblioteca.statisticheseditot AS
- WITH np AS (
-         SELECT b_1.sede AS posto,
-            count(DISTINCT c_1.id) AS npr
-           FROM (biblioteca.biblioteca b_1
-             LEFT JOIN biblioteca.copia c_1 ON ((((b_1.sede)::text = (c_1.dove)::text) AND (c_1.disp = false))))
-          GROUP BY b_1.sede
-        )
- SELECT b.sede AS dove,
-    count(DISTINCT c.id) AS qid,
-    count(DISTINCT c.libro) AS qis,
-    COALESCE(n.npr, (0)::bigint) AS qpr
-   FROM ((biblioteca.biblioteca b
-     LEFT JOIN biblioteca.copia c ON (((b.sede)::text = (c.dove)::text)))
-     LEFT JOIN np n ON (((b.sede)::text = (n.posto)::text)))
-  GROUP BY b.sede, n.npr
-  ORDER BY b.sede
-  WITH NO DATA;
-
-
-ALTER TABLE biblioteca.statisticheseditot OWNER TO giacomo_castellana;
 
 --
 -- Name: country; Type: TABLE; Schema: public; Owner: giuseppe_difilippo
@@ -1051,21 +1007,6 @@ ALTER TABLE ONLY biblioteca.scritto
 
 REVOKE USAGE ON SCHEMA public FROM PUBLIC;
 GRANT ALL ON SCHEMA public TO PUBLIC;
-
-
---
--- Name: staistichesedi; Type: MATERIALIZED VIEW DATA; Schema: biblioteca; Owner: giacomo_castellana
---
-
-REFRESH MATERIALIZED VIEW biblioteca.staistichesedi;
-
-
---
--- Name: statisticheseditot; Type: MATERIALIZED VIEW DATA; Schema: biblioteca; Owner: giacomo_castellana
---
-
-REFRESH MATERIALIZED VIEW biblioteca.statisticheseditot;
-
 
 --
 -- PostgreSQL database dump complete
